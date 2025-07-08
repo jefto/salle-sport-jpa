@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+                                 http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0">
+
+    <!-- Définition de l'unité de persistance pour l'application -->
+    <persistence-unit name="jpaPU" transaction-type="RESOURCE_LOCAL">
+        <!-- Liste des classes d'entités à mapper -->
+        <class>entite.TypeAbonnement</class>
+        <class>entite.Salle</class>
+        <class>entite.Equipement</class>
+
+
+        <!-- Configuration des propriétés Hibernate -->
+        <properties>
+            <!-- Connexion à la base de données PostgreSQL -->
+            <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
+            <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/gym"/>
+            <property name="hibernate.connection.username" value="postgres"/>
+            <property name="hibernate.connection.password" value="Jefto"/>
+            <property name="javax.persistence.schema-generation.database.action" value="create"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <!-- Dialecte pour PostgreSQL -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+        </properties>
+    </persistence-unit>
+
+</persistence>

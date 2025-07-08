@@ -1,0 +1,9 @@
+Bonjour chers amis, 
+*Je confirme que le cours de demain lundi aura lieu.*
+Voici ce que j’attends de vous: 
+    1. Écrire les autres méthodes de la classe TypeAbonnementDao.
+    2. S’en inspirer pour créer écrire le code des classes "dao" de toutes les entités (SalleDao, MembreDao, ClientDao, …).
+    3. Écrire les autres méthodes de la classe TypeAbonnementService.
+    4. S’en inspirer pour créer écrire le code des classes "service" de toutes les entités (SalleService, MembreService, ClientService, …).
+    5. Créer l’ossature (Layout) des pages en s’inspirant des travaux que nous avons déjà fait avec Swing. 
+Je vous souhaite un très bon dimanche.
