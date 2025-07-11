@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package entite;
 
 import javax.persistence.*;
@@ -29,29 +25,43 @@ public class Client extends GenericEntity {
     @Column(name="date_naissance")
     private LocalDateTime dateNaissance;
 
-
     @Column(name="email")
     private String email;
 
+    @Column(name="mot_de_passe")
+    private String motDePasse;
 
     
     public Client(){
         
     }
 
-    public Client(Integer id, String nom, String prenom, LocalDateTime dateNaissance, String email) {
+    // Constructeur complet avec ID
+    public Client(Integer id, String nom, String prenom, LocalDateTime dateNaissance, String email, String motDePasse) {
         this.id = id;
         this.nom = nom;
         this.prenom = prenom;
         this.dateNaissance = dateNaissance;
         this.email = email;
+        this.motDePasse = motDePasse;
     }
 
+    // Constructeur sans ID (pour nouveau client avec mot de passe)
+    public Client(String nom, String prenom, LocalDateTime dateNaissance, String email, String motDePasse) {
+        this.nom = nom;
+        this.prenom = prenom;
+        this.dateNaissance = dateNaissance;
+        this.email = email;
+        this.motDePasse = motDePasse;
+    }
+
+    // NOUVEAU : Constructeur sans mot de passe (pour compatibilité avec l'admin)
     public Client(String nom, String prenom, LocalDateTime dateNaissance, String email) {
         this.nom = nom;
         this.prenom = prenom;
         this.dateNaissance = dateNaissance;
         this.email = email;
+        this.motDePasse = null; // Sera défini plus tard
     }
 
     public Integer getId() {
@@ -94,9 +104,16 @@ public class Client extends GenericEntity {
         this.email = email;
     }
 
+    public String getMotDePasse() {
+        return motDePasse;
+    }
+
+    public void setMotDePasse(String motDePasse) {
+        this.motDePasse = motDePasse;
+    }
+
     @Override
     public String toString() {
         return id + (" ") + nom + (" ") + prenom;
     }
-    
 }

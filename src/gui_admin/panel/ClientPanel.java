@@ -36,7 +36,8 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
     }
 
     private void initializeTable() {
-        String[] colonnes = {"Sélection", "ID", "Nom", "Prénom", "Date de naissance", "Email"};
+        // Ajout de la colonne "Mot de passe"
+        String[] colonnes = {"Sélection", "ID", "Nom", "Prénom", "Date de naissance", "Email", "Mot de passe"};
 
         tableModel = new DefaultTableModel(colonnes, 0) {
             @Override
@@ -50,6 +51,12 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
 
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setPreferredWidth(70);
+        table.getColumnModel().getColumn(1).setPreferredWidth(50);   // ID
+        table.getColumnModel().getColumn(2).setPreferredWidth(100);  // Nom
+        table.getColumnModel().getColumn(3).setPreferredWidth(100);  // Prénom
+        table.getColumnModel().getColumn(4).setPreferredWidth(120);  // Date de naissance
+        table.getColumnModel().getColumn(5).setPreferredWidth(150);  // Email
+        table.getColumnModel().getColumn(6).setPreferredWidth(120);  // Mot de passe
         
         // Styliser l'en-tête
         StyleUtil.styliserTableHeader(table);
@@ -97,19 +104,21 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
                 client.getNom(),
                 client.getPrenom(),
                 client.getDateNaissance() != null ? client.getDateNaissance().format(formatter) : "Non définie",
-                client.getEmail()
+                client.getEmail(),
+                client.getMotDePasse() != null ? client.getMotDePasse() : "Non défini" // Affichage complet du mot de passe
             });
         }
     }
 
     @Override
     public void ajouter() {
-        // Créer un formulaire de saisie
-        JPanel formulaire = new JPanel(new GridLayout(4, 2, 10, 10));
+        // Créer un formulaire de saisie avec le champ mot de passe
+        JPanel formulaire = new JPanel(new GridLayout(5, 2, 10, 10));
         JTextField nomField = new JTextField();
         JTextField prenomField = new JTextField();
         JTextField dateNaissanceField = new JTextField();
         JTextField emailField = new JTextField();
+        JTextField motDePasseField = new JTextField(); // Champ texte normal pour voir le mot de passe
         
         // Pré-remplir la date avec un exemple
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -123,6 +132,8 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
         formulaire.add(dateNaissanceField);
         formulaire.add(new JLabel("Email :"));
         formulaire.add(emailField);
+        formulaire.add(new JLabel("Mot de passe :"));
+        formulaire.add(motDePasseField);
         
         int result = JOptionPane.showConfirmDialog(
             this, 
@@ -137,8 +148,9 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
             String prenom = prenomField.getText().trim();
             String dateNaissanceText = dateNaissanceField.getText().trim();
             String email = emailField.getText().trim();
+            String motDePasse = motDePasseField.getText().trim();
             
-            if (!nom.isEmpty() && !prenom.isEmpty() && !dateNaissanceText.isEmpty() && !email.isEmpty()) {
+            if (!nom.isEmpty() && !prenom.isEmpty() && !dateNaissanceText.isEmpty() && !email.isEmpty() && !motDePasse.isEmpty()) {
                 try {
                     // Validation de l'email
                     if (!EMAIL_PATTERN.matcher(email).matches()) {
@@ -162,6 +174,7 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
                     }
                     
                     Client nouveauClient = new Client(nom, prenom, dateNaissance, email);
+                    nouveauClient.setMotDePasse(motDePasse);
                     clientService.ajouter(nouveauClient);
                     
                     JOptionPane.showMessageDialog(this, 
@@ -192,11 +205,17 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
     public void modifier() {
         if (clientSelectionne != null) {
             // Pré-remplir le formulaire avec les données existantes
-            JPanel formulaire = new JPanel(new GridLayout(4, 2, 10, 10));
+            JPanel formulaire = new JPanel(new GridLayout(5, 2, 10, 10));
             JTextField nomField = new JTextField(clientSelectionne.getNom());
             JTextField prenomField = new JTextField(clientSelectionne.getPrenom());
             JTextField dateNaissanceField = new JTextField();
             JTextField emailField = new JTextField(clientSelectionne.getEmail());
+            JTextField motDePasseField = new JTextField(); // Champ texte normal
+            
+            // Pré-remplir le mot de passe existant
+            if (clientSelectionne.getMotDePasse() != null) {
+                motDePasseField.setText(clientSelectionne.getMotDePasse());
+            }
             
             // Formatter et afficher la date existante
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -212,6 +231,8 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
             formulaire.add(dateNaissanceField);
             formulaire.add(new JLabel("Email :"));
             formulaire.add(emailField);
+            formulaire.add(new JLabel("Mot de passe :"));
+            formulaire.add(motDePasseField);
             
             int result = JOptionPane.showConfirmDialog(
                 this, 
@@ -226,8 +247,9 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
                 String prenom = prenomField.getText().trim();
                 String dateNaissanceText = dateNaissanceField.getText().trim();
                 String email = emailField.getText().trim();
+                String motDePasse = motDePasseField.getText().trim();
                 
-                if (!nom.isEmpty() && !prenom.isEmpty() && !dateNaissanceText.isEmpty() && !email.isEmpty()) {
+                if (!nom.isEmpty() && !prenom.isEmpty() && !dateNaissanceText.isEmpty() && !email.isEmpty() && !motDePasse.isEmpty()) {
                     try {
                         // Validation de l'email
                         if (!EMAIL_PATTERN.matcher(email).matches()) {
@@ -255,6 +277,7 @@ public class ClientPanel extends JPanel implements CrudOperationsInterface {
                         clientSelectionne.setPrenom(prenom);
                         clientSelectionne.setDateNaissance(dateNaissance);
                         clientSelectionne.setEmail(email);
+                        clientSelectionne.setMotDePasse(motDePasse);
                         
                         clientService.modifier(clientSelectionne);
                         
