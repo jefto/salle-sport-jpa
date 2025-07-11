@@ -61,6 +61,25 @@ public class AdminDashboard extends JFrame {
         JButton deconnexionBtn = new JButton();
         configurerBouton(deconnexionBtn, "Deconnexion", new Color(255, 0, 0), Color.WHITE, font, taille);
 
+        // Ajouter l'action de déconnexion
+        deconnexionBtn.addActionListener(e -> {
+            // Demander confirmation
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Êtes-vous sûr de vouloir vous déconnecter ?",
+                "Confirmation",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Fermer la fenêtre actuelle
+                this.dispose();
+
+                // Afficher le sélecteur d'interface
+                salle_gym.Main.showInterfaceSelector();
+            }
+        });
+
         // Menu déroulant à droite
         comboPages = new JComboBox<>(new String[]{
                 "Accueil", "Abonnements", "Clients", "Demande Inscription",
@@ -98,10 +117,10 @@ public class AdminDashboard extends JFrame {
      */
     private void executerAction(String action) {
         Component currentPanel = getCurrentPanel();
-        
+
         if (currentPanel instanceof CrudOperationsInterface) {
             CrudOperationsInterface crudPanel = (CrudOperationsInterface) currentPanel;
-            
+
             switch (action.toLowerCase()) {
                 case "ajouter":
                     crudPanel.ajouter();

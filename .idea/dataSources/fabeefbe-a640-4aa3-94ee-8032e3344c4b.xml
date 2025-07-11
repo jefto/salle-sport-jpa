@@ -11,9 +11,9 @@
 4||10|c|G
 4||10|C|G
 4||10|T|G</Grants>
-      <IntrospectionStateNumber>845</IntrospectionStateNumber>
+      <IntrospectionStateNumber>1664</IntrospectionStateNumber>
       <ServerVersion>15.9</ServerVersion>
-      <StartupTime>1751119079</StartupTime>
+      <StartupTime>1752097326</StartupTime>
       <TimeZones>true ACDT
 true ACSST
 false ACST
@@ -808,7 +808,7 @@ false Zulu
 13183||10|C|G
 13183||-9223372036854775808|U|G
 13183||10|U|G</Grants>
-      <IntrospectionStateNumber>845</IntrospectionStateNumber>
+      <IntrospectionStateNumber>1664</IntrospectionStateNumber>
       <ObjectId>16397</ObjectId>
       <OwnerName>postgres</OwnerName>
     </database>
@@ -4226,8 +4226,8 @@ false Zulu
     <schema id="262" parent="2" name="public">
       <Comment>standard public schema</Comment>
       <Current>1</Current>
-      <IntrospectionStateNumber>845</IntrospectionStateNumber>
-      <LastIntrospectionLocalTimestamp>2025-06-28.15:34:02</LastIntrospectionLocalTimestamp>
+      <IntrospectionStateNumber>1664</IntrospectionStateNumber>
+      <LastIntrospectionLocalTimestamp>2025-07-11.12:22:02</LastIntrospectionLocalTimestamp>
       <ObjectId>2200</ObjectId>
       <StateNumber>518</StateNumber>
       <OwnerName>pg_database_owner</OwnerName>
@@ -4328,7 +4328,7 @@ false Zulu
     </table>
     <table id="275" parent="262" name="client">
       <ObjectId>16475</ObjectId>
-      <StateNumber>827</StateNumber>
+      <StateNumber>1663</StateNumber>
       <AccessMethodId>2</AccessMethodId>
       <OwnerName>postgres</OwnerName>
     </table>
@@ -4501,7 +4501,14 @@ false Zulu
       <StoredType>varchar(255)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <index id="302" parent="275" name="client_pkey">
+    <column id="302" parent="275" name="mot_de_passe">
+      <DefaultExpression>&apos;motdepasse123&apos;::character varying</DefaultExpression>
+      <Position>6</Position>
+      <StateNumber>1663</StateNumber>
+      <StoredType>varchar(255)|0s</StoredType>
+      <TypeId>1043</TypeId>
+    </column>
+    <index id="303" parent="275" name="client_pkey">
       <ColNames>id_client</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16481</ObjectId>
@@ -4510,14 +4517,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="303" parent="275" name="client_pkey">
+    <key id="304" parent="275" name="client_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16482</ObjectId>
       <Primary>1</Primary>
       <StateNumber>802</StateNumber>
       <UnderlyingIndexId>16481</UnderlyingIndexId>
     </key>
-    <column id="304" parent="276" name="id_demande_inscription">
+    <column id="305" parent="276" name="id_demande_inscription">
       <DefaultExpression>nextval(&apos;demande_inscription_id_demande_inscription_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4526,32 +4533,32 @@ false Zulu
       <SequenceId>24597</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="305" parent="276" name="date_demande">
+    <column id="306" parent="276" name="date_demande">
       <Position>2</Position>
       <StateNumber>815</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="306" parent="276" name="date_traitement">
+    <column id="307" parent="276" name="date_traitement">
       <Position>3</Position>
       <StateNumber>815</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="307" parent="276" name="client_id_client">
+    <column id="308" parent="276" name="client_id_client">
       <Position>4</Position>
       <StateNumber>815</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="308" parent="276" name="fkdblxpi4cvgk2a64t0xwnhikpm">
+    <foreign-key id="309" parent="276" name="fkdblxpi4cvgk2a64t0xwnhikpm">
       <ColNames>client_id_client</ColNames>
       <ObjectId>24663</ObjectId>
       <StateNumber>827</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16475</RefTableId>
     </foreign-key>
-    <index id="309" parent="276" name="demande_inscription_pkey">
+    <index id="310" parent="276" name="demande_inscription_pkey">
       <ColNames>id_demande_inscription</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24602</ObjectId>
@@ -4560,14 +4567,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="310" parent="276" name="demande_inscription_pkey">
+    <key id="311" parent="276" name="demande_inscription_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24603</ObjectId>
       <Primary>1</Primary>
       <StateNumber>815</StateNumber>
       <UnderlyingIndexId>24602</UnderlyingIndexId>
     </key>
-    <column id="311" parent="277" name="id">
+    <column id="312" parent="277" name="id">
       <DefaultExpression>nextval(&apos;equipement_id_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4576,34 +4583,34 @@ false Zulu
       <SequenceId>16398</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="312" parent="277" name="description">
+    <column id="313" parent="277" name="description">
       <Position>2</Position>
       <StateNumber>735</StateNumber>
       <StoredType>varchar(255)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="313" parent="277" name="libelle">
+    <column id="314" parent="277" name="libelle">
       <NotNull>1</NotNull>
       <Position>3</Position>
       <StateNumber>735</StateNumber>
       <StoredType>varchar(100)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="314" parent="277" name="id_salle">
+    <column id="315" parent="277" name="id_salle">
       <NotNull>1</NotNull>
       <Position>4</Position>
       <StateNumber>735</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="315" parent="277" name="fkcpmyvokvv1qh8s07i2sib72m8">
+    <foreign-key id="316" parent="277" name="fkcpmyvokvv1qh8s07i2sib72m8">
       <ColNames>id_salle</ColNames>
       <ObjectId>16417</ObjectId>
       <StateNumber>738</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16406</RefTableId>
     </foreign-key>
-    <index id="316" parent="277" name="equipement_pkey">
+    <index id="317" parent="277" name="equipement_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16403</ObjectId>
@@ -4612,14 +4619,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="317" parent="277" name="equipement_pkey">
+    <key id="318" parent="277" name="equipement_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16404</ObjectId>
       <Primary>1</Primary>
       <StateNumber>735</StateNumber>
       <UnderlyingIndexId>16403</UnderlyingIndexId>
     </key>
-    <column id="318" parent="278" name="id_horaire">
+    <column id="319" parent="278" name="id_horaire">
       <DefaultExpression>nextval(&apos;horaire_id_horaire_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4628,19 +4635,19 @@ false Zulu
       <SequenceId>24605</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="319" parent="278" name="date_debut">
+    <column id="320" parent="278" name="date_debut">
       <Position>2</Position>
       <StateNumber>817</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="320" parent="278" name="date_fin">
+    <column id="321" parent="278" name="date_fin">
       <Position>3</Position>
       <StateNumber>817</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <index id="321" parent="278" name="horaire_pkey">
+    <index id="322" parent="278" name="horaire_pkey">
       <ColNames>id_horaire</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24610</ObjectId>
@@ -4649,14 +4656,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="322" parent="278" name="horaire_pkey">
+    <key id="323" parent="278" name="horaire_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24611</ObjectId>
       <Primary>1</Primary>
       <StateNumber>817</StateNumber>
       <UnderlyingIndexId>24610</UnderlyingIndexId>
     </key>
-    <column id="323" parent="279" name="id_membre">
+    <column id="324" parent="279" name="id_membre">
       <DefaultExpression>nextval(&apos;membre_id_membre_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4665,26 +4672,26 @@ false Zulu
       <SequenceId>24612</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="324" parent="279" name="date_inscription">
+    <column id="325" parent="279" name="date_inscription">
       <Position>2</Position>
       <StateNumber>818</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="325" parent="279" name="client_id_client">
+    <column id="326" parent="279" name="client_id_client">
       <Position>3</Position>
       <StateNumber>818</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="326" parent="279" name="fkqalj3sguhaa3sg3wgx9k89pl3">
+    <foreign-key id="327" parent="279" name="fkqalj3sguhaa3sg3wgx9k89pl3">
       <ColNames>client_id_client</ColNames>
       <ObjectId>24668</ObjectId>
       <StateNumber>828</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16475</RefTableId>
     </foreign-key>
-    <index id="327" parent="279" name="membre_pkey">
+    <index id="328" parent="279" name="membre_pkey">
       <ColNames>id_membre</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24617</ObjectId>
@@ -4693,14 +4700,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="328" parent="279" name="membre_pkey">
+    <key id="329" parent="279" name="membre_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24618</ObjectId>
       <Primary>1</Primary>
       <StateNumber>818</StateNumber>
       <UnderlyingIndexId>24617</UnderlyingIndexId>
     </key>
-    <column id="329" parent="280" name="id_moyen_de_paiement">
+    <column id="330" parent="280" name="id_moyen_de_paiement">
       <DefaultExpression>nextval(&apos;moyens_de_paiement_id_moyen_de_paiement_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4709,14 +4716,14 @@ false Zulu
       <SequenceId>24619</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="330" parent="280" name="libelle">
+    <column id="331" parent="280" name="libelle">
       <NotNull>1</NotNull>
       <Position>2</Position>
       <StateNumber>819</StateNumber>
       <StoredType>varchar(100)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <index id="331" parent="280" name="moyens_de_paiement_pkey">
+    <index id="332" parent="280" name="moyens_de_paiement_pkey">
       <ColNames>id_moyen_de_paiement</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24624</ObjectId>
@@ -4725,14 +4732,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="332" parent="280" name="moyens_de_paiement_pkey">
+    <key id="333" parent="280" name="moyens_de_paiement_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24625</ObjectId>
       <Primary>1</Primary>
       <StateNumber>819</StateNumber>
       <UnderlyingIndexId>24624</UnderlyingIndexId>
     </key>
-    <column id="333" parent="281" name="id_paiement">
+    <column id="334" parent="281" name="id_paiement">
       <DefaultExpression>nextval(&apos;paiement_id_paiement_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4741,32 +4748,32 @@ false Zulu
       <SequenceId>24626</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="334" parent="281" name="date_de_paiement">
+    <column id="335" parent="281" name="date_de_paiement">
       <Position>2</Position>
       <StateNumber>820</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="335" parent="281" name="montant">
+    <column id="336" parent="281" name="montant">
       <Position>3</Position>
       <StateNumber>820</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <column id="336" parent="281" name="moyendepaiement_id_moyen_de_paiement">
+    <column id="337" parent="281" name="moyendepaiement_id_moyen_de_paiement">
       <Position>4</Position>
       <StateNumber>820</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="337" parent="281" name="fk2g4b831ayxgbsmgppotf4v9y5">
+    <foreign-key id="338" parent="281" name="fk2g4b831ayxgbsmgppotf4v9y5">
       <ColNames>moyendepaiement_id_moyen_de_paiement</ColNames>
       <ObjectId>24673</ObjectId>
       <StateNumber>829</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>24620</RefTableId>
     </foreign-key>
-    <index id="338" parent="281" name="paiement_pkey">
+    <index id="339" parent="281" name="paiement_pkey">
       <ColNames>id_paiement</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24631</ObjectId>
@@ -4775,14 +4782,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="339" parent="281" name="paiement_pkey">
+    <key id="340" parent="281" name="paiement_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24632</ObjectId>
       <Primary>1</Primary>
       <StateNumber>820</StateNumber>
       <UnderlyingIndexId>24631</UnderlyingIndexId>
     </key>
-    <column id="340" parent="282" name="id">
+    <column id="341" parent="282" name="id">
       <DefaultExpression>nextval(&apos;salle_id_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4791,20 +4798,20 @@ false Zulu
       <SequenceId>16405</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="341" parent="282" name="description">
+    <column id="342" parent="282" name="description">
       <Position>2</Position>
       <StateNumber>736</StateNumber>
       <StoredType>varchar(255)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="342" parent="282" name="libelle">
+    <column id="343" parent="282" name="libelle">
       <NotNull>1</NotNull>
       <Position>3</Position>
       <StateNumber>736</StateNumber>
       <StoredType>varchar(100)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <index id="343" parent="282" name="salle_pkey">
+    <index id="344" parent="282" name="salle_pkey">
       <ColNames>id</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16410</ObjectId>
@@ -4813,14 +4820,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="344" parent="282" name="salle_pkey">
+    <key id="345" parent="282" name="salle_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16411</ObjectId>
       <Primary>1</Primary>
       <StateNumber>736</StateNumber>
       <UnderlyingIndexId>16410</UnderlyingIndexId>
     </key>
-    <column id="345" parent="283" name="id_seance">
+    <column id="346" parent="283" name="id_seance">
       <DefaultExpression>nextval(&apos;seance_id_seance_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4829,45 +4836,45 @@ false Zulu
       <SequenceId>24634</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="346" parent="283" name="date_debut">
+    <column id="347" parent="283" name="date_debut">
       <Position>2</Position>
       <StateNumber>822</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="347" parent="283" name="date_fin">
+    <column id="348" parent="283" name="date_fin">
       <Position>3</Position>
       <StateNumber>822</StateNumber>
       <StoredType>timestamp|0s</StoredType>
       <TypeId>1114</TypeId>
     </column>
-    <column id="348" parent="283" name="membre_id_membre">
+    <column id="349" parent="283" name="membre_id_membre">
       <Position>4</Position>
       <StateNumber>822</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <column id="349" parent="283" name="salle_id">
+    <column id="350" parent="283" name="salle_id">
       <Position>5</Position>
       <StateNumber>822</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="350" parent="283" name="fksl4llg5c2fql3el8femarfyat">
+    <foreign-key id="351" parent="283" name="fksl4llg5c2fql3el8femarfyat">
       <ColNames>membre_id_membre</ColNames>
       <ObjectId>24678</ObjectId>
       <StateNumber>830</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>24613</RefTableId>
     </foreign-key>
-    <foreign-key id="351" parent="283" name="fkhupu0bkkkinurpu14xeyjcuep">
+    <foreign-key id="352" parent="283" name="fkhupu0bkkkinurpu14xeyjcuep">
       <ColNames>salle_id</ColNames>
       <ObjectId>24683</ObjectId>
       <StateNumber>831</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16406</RefTableId>
     </foreign-key>
-    <index id="352" parent="283" name="seance_pkey">
+    <index id="353" parent="283" name="seance_pkey">
       <ColNames>id_seance</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24639</ObjectId>
@@ -4876,14 +4883,14 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="353" parent="283" name="seance_pkey">
+    <key id="354" parent="283" name="seance_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24640</ObjectId>
       <Primary>1</Primary>
       <StateNumber>822</StateNumber>
       <UnderlyingIndexId>24639</UnderlyingIndexId>
     </key>
-    <column id="354" parent="284" name="id_ticket">
+    <column id="355" parent="284" name="id_ticket">
       <DefaultExpression>nextval(&apos;ticket_id_ticket_seq&apos;::regclass)</DefaultExpression>
       <NotNull>1</NotNull>
       <Position>1</Position>
@@ -4892,32 +4899,32 @@ false Zulu
       <SequenceId>24641</SequenceId>
       <TypeId>23</TypeId>
     </column>
-    <column id="355" parent="284" name="montant">
+    <column id="356" parent="284" name="montant">
       <Position>2</Position>
       <StateNumber>823</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <column id="356" parent="284" name="nombre_de_seance">
+    <column id="357" parent="284" name="nombre_de_seance">
       <Position>3</Position>
       <StateNumber>823</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <column id="357" parent="284" name="client_id_client">
+    <column id="358" parent="284" name="client_id_client">
       <Position>4</Position>
       <StateNumber>823</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <foreign-key id="358" parent="284" name="fkngrnela8hfe5v60wq22oteiu5">
+    <foreign-key id="359" parent="284" name="fkngrnela8hfe5v60wq22oteiu5">
       <ColNames>client_id_client</ColNames>
       <ObjectId>24688</ObjectId>
       <StateNumber>832</StateNumber>
       <RefKeyColPositions>1</RefKeyColPositions>
       <RefTableId>16475</RefTableId>
     </foreign-key>
-    <index id="359" parent="284" name="ticket_pkey">
+    <index id="360" parent="284" name="ticket_pkey">
       <ColNames>id_ticket</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24646</ObjectId>
@@ -4926,35 +4933,35 @@ false Zulu
       <Unique>1</Unique>
       <AccessMethodId>403</AccessMethodId>
     </index>
-    <key id="360" parent="284" name="ticket_pkey">
+    <key id="361" parent="284" name="ticket_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>24647</ObjectId>
       <Primary>1</Primary>
       <StateNumber>823</StateNumber>
       <UnderlyingIndexId>24646</UnderlyingIndexId>
     </key>
-    <column id="361" parent="285" name="code">
+    <column id="362" parent="285" name="code">
       <NotNull>1</NotNull>
       <Position>1</Position>
       <StateNumber>737</StateNumber>
       <StoredType>varchar(20)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="362" parent="285" name="libelle">
+    <column id="363" parent="285" name="libelle">
       <NotNull>1</NotNull>
       <Position>2</Position>
       <StateNumber>737</StateNumber>
       <StoredType>varchar(100)|0s</StoredType>
       <TypeId>1043</TypeId>
     </column>
-    <column id="363" parent="285" name="montant">
+    <column id="364" parent="285" name="montant">
       <NotNull>1</NotNull>
       <Position>3</Position>
       <StateNumber>737</StateNumber>
       <StoredType>integer|0s</StoredType>
       <TypeId>23</TypeId>
     </column>
-    <index id="364" parent="285" name="types_abonnement_pkey">
+    <index id="365" parent="285" name="types_abonnement_pkey">
       <ColNames>code</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16415</ObjectId>
@@ -4966,7 +4973,7 @@ false Zulu
       <CollationIds>100</CollationIds>
       <CollationParentNames>pg_catalog</CollationParentNames>
     </index>
-    <key id="365" parent="285" name="types_abonnement_pkey">
+    <key id="366" parent="285" name="types_abonnement_pkey">
       <NameSurrogate>1</NameSurrogate>
       <ObjectId>16416</ObjectId>
       <Primary>1</Primary>
