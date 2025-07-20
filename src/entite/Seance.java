@@ -6,6 +6,8 @@ package entite;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
@@ -26,29 +28,29 @@ public class Seance extends GenericEntity{
     @Column(name="date_fin")
     private LocalDateTime dateFin;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Membre membre;
+    @OneToMany(mappedBy = "seance", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Membre> membres;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Salle salle;
     
     public Seance(){
-        
+
     }
 
-    public Seance(Integer id, LocalDateTime dateDebut, LocalDateTime dateFin, Salle salle, Membre membre) {
+    public Seance(Integer id, LocalDateTime dateDebut, LocalDateTime dateFin, Salle salle) {
         this.id = id;
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
         this.salle = salle;
-        this.membre = membre;
+        this.membres = new ArrayList<>();
     }
 
-    public Seance(LocalDateTime dateDebut, LocalDateTime dateFin, Membre membre, Salle salle) {
+    public Seance(LocalDateTime dateDebut, LocalDateTime dateFin, Salle salle) {
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
-        this.membre = membre;
         this.salle = salle;
+        this.membres = new ArrayList<>();
     }
 
     public Integer getId() {
@@ -75,12 +77,46 @@ public class Seance extends GenericEntity{
         this.dateFin = dateFin;
     }
 
-    public Membre getMembre() {
-        return membre;
+    public List<Membre> getMembres() {
+        return membres;
     }
 
-    public void setMembre(Membre membre) {
-        this.membre = membre;
+    public void setMembres(List<Membre> membres) {
+        this.membres = membres;
+    }
+
+    /**
+     * Ajouter un membre à la séance
+     */
+    public void ajouterMembre(Membre membre) {
+        if (membre != null && !this.membres.contains(membre)) {
+            this.membres.add(membre);
+            membre.setSeance(this);
+        }
+    }
+
+    /**
+     * Retirer un membre de la séance
+     */
+    public void retirerMembre(Membre membre) {
+        if (membre != null && this.membres.contains(membre)) {
+            this.membres.remove(membre);
+            membre.setSeance(null);
+        }
+    }
+
+    /**
+     * Vérifier si un membre est inscrit à cette séance
+     */
+    public boolean contientMembre(Membre membre) {
+        return membre != null && this.membres.contains(membre);
+    }
+
+    /**
+     * Obtenir le nombre de membres inscrits
+     */
+    public int getNombreMembres() {
+        return this.membres.size();
     }
 
     public Salle getSalle() {

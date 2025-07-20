@@ -1,10 +1,8 @@
 package gui_admin.view.seances;
 
-import entite.Membre;
 import entite.Salle;
 import entite.Seance;
 import gui_util.GenericEdit;
-import service.MembreService;
 import service.SalleService;
 
 import javax.swing.*;
@@ -17,7 +15,6 @@ public class Edit extends GenericEdit<Seance> {
     private GridBagConstraints gbc = new GridBagConstraints();
     private JTextField dateDebut = new JTextField();
     private JTextField dateFin = new JTextField();
-    private JComboBox<Membre> membres = new JComboBox<>();
     private JComboBox<Salle> salles = new JComboBox<>();
     
     // Formatter pour les dates
@@ -28,7 +25,6 @@ public class Edit extends GenericEdit<Seance> {
         
         JLabel dateDebutLabel = new JLabel("Date début :");
         JLabel dateFinLabel = new JLabel("Date fin :");
-        JLabel membreLabel = new JLabel("Membre :");
         JLabel salleLabel = new JLabel("Salle :");
 
         // Marges entre composants
@@ -52,18 +48,9 @@ public class Edit extends GenericEdit<Seance> {
         gbc.gridx = 1;
         this.form.add(dateFin, gbc);
 
-        // Ligne 2 : Membre
+        // Ligne 2 : Salle
         gbc.gridx = 0;
         gbc.gridy = 2;
-        this.form.add(membreLabel, gbc);
-
-        gbc.gridx = 1;
-        this.loadMembres();
-        this.form.add(membres, gbc);
-
-        // Ligne 3 : Salle
-        gbc.gridx = 0;
-        gbc.gridy = 3;
         this.form.add(salleLabel, gbc);
 
         gbc.gridx = 1;
@@ -74,7 +61,6 @@ public class Edit extends GenericEdit<Seance> {
         Dimension fieldSize = new Dimension(200, 25);
         dateDebut.setPreferredSize(fieldSize);
         dateFin.setPreferredSize(fieldSize);
-        membres.setPreferredSize(fieldSize);
         salles.setPreferredSize(fieldSize);
 
         // Ajouter des tooltips pour aider l'utilisateur
@@ -83,13 +69,6 @@ public class Edit extends GenericEdit<Seance> {
 
         // Mise en forme du panneau
         this.form.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    }
-
-    private void loadMembres() {
-        MembreService service = new MembreService();
-        for (Membre membre : service.listerTous()) {
-            membres.addItem(membre);
-        }
     }
 
     private void loadSalles() {
@@ -102,10 +81,8 @@ public class Edit extends GenericEdit<Seance> {
     @Override
     public void initEntity() {
         try {
-            Membre membre = (Membre) membres.getSelectedItem();
             Salle salle = (Salle) salles.getSelectedItem();
             
-            this.entity.setMembre(membre);
             this.entity.setSalle(salle);
             
             // Conversion des chaînes de caractères vers LocalDateTime
@@ -127,7 +104,6 @@ public class Edit extends GenericEdit<Seance> {
 
     @Override
     public void initForm() {
-        membres.setSelectedItem(this.entity.getMembre());
         salles.setSelectedItem(this.entity.getSalle());
         
         // Conversion des LocalDateTime vers chaînes de caractères

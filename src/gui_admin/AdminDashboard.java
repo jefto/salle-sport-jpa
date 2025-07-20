@@ -5,6 +5,7 @@ import gui_admin.panel.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 
 public class AdminDashboard extends JFrame {
 
@@ -80,15 +81,52 @@ public class AdminDashboard extends JFrame {
             }
         });
 
+        // Charger l'image de notification
+        JLabel notificationIcon = new JLabel();
+        try {
+            URL notificationUrl = getClass().getClassLoader().getResource("assets/notification.png");
+            if (notificationUrl != null) {
+                ImageIcon originalIcon = new ImageIcon(notificationUrl);
+                // Redimensionner l'icône pour qu'elle s'adapte bien à la barre
+                Image img = originalIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon = new ImageIcon(img);
+                notificationIcon.setIcon(scaledIcon);
+                notificationIcon.setToolTipText("Notifications");
+                notificationIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+                // Ajouter un listener pour les clics sur l'icône de notification
+                notificationIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        // Naviguer vers la page des notifications
+                        navigationController.navigateToPage("Notifications");
+                        // Synchroniser le ComboBox
+                        comboPages.setSelectedItem("Notifications");
+                    }
+                });
+            } else {
+                // Si l'image n'est pas trouvée, afficher un texte de fallback
+                notificationIcon.setText("🔔");
+                notificationIcon.setForeground(new Color(255, 254, 242));
+                notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, utiliser un emoji comme fallback
+            notificationIcon.setText("🔔");
+            notificationIcon.setForeground(new Color(255, 254, 242));
+            notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
+        }
+
         // Menu déroulant à droite
         comboPages = new JComboBox<>(new String[]{
                 "Accueil", "Abonnements", "Clients", "Demande Inscription",
                 "Equipments", "Horaire", "Membres", "Moyen de Paiement",
-                "Paiements", "Salles", "Seance", "Tickets", "Types Abonnements",
+                "Notifications", "Paiements", "Salles", "Seance", "Tickets", "Types Abonnements",
         });
         StyleUtil.styliserComboBox(comboPages);
 
         profilPart.add(deconnexionBtn);
+        profilPart.add(notificationIcon);
         profilPart.add(comboPages);
         topBar.add(profilPart, BorderLayout.EAST);
         this.add(bottomBar, BorderLayout.SOUTH);

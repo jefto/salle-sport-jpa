@@ -28,7 +28,7 @@ public class MembrePanel extends JPanel implements CrudOperationsInterface {
         this.setLayout(new BorderLayout());
         this.membreService = new MembreService();
         this.clientService = new ClientService();
-        
+
         initializeTable();
         loadData();
     }
@@ -83,34 +83,65 @@ public class MembrePanel extends JPanel implements CrudOperationsInterface {
         // Vider le modèle
         tableModel.setRowCount(0);
         
-        // Charger les données
-        membres = membreService.listerTous();
-        
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        
-        for (Membre membre : membres) {
-            String dateInscription = membre.getDateInscription() != null ? 
-                membre.getDateInscription().format(formatter) : "Non définie";
-            
-            String nomComplet = "Client non assigné";
-            String emailClient = "N/A";
-            String statut = "Inactif";
-            
-            if (membre.getClient() != null) {
-                Client client = membre.getClient();
-                nomComplet = client.getPrenom() + " " + client.getNom();
-                emailClient = client.getEmail() != null ? client.getEmail() : "N/A";
-                statut = "Actif";
+        try {
+            // Charger les données avec gestion d'erreurs
+            membres = membreService.listerTous();
+
+            if (membres == null) {
+                JOptionPane.showMessageDialog(this,
+                    "Erreur : La liste des membres est null",
+                    "Erreur de chargement",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
             }
-            
-            tableModel.addRow(new Object[]{
-                false,
-                membre.getId(),
-                dateInscription,
-                nomComplet,
-                emailClient,
-                statut
-            });
+
+            if (membres.isEmpty()) {
+                // Afficher un message informatif si aucun membre n'existe
+                System.out.println("INFO: Aucun membre trouvé dans la base de données");
+                return;
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+            for (Membre membre : membres) {
+                try {
+                    String dateInscription = membre.getDateInscription() != null ?
+                        membre.getDateInscription().format(formatter) : "Non définie";
+
+                    String nomComplet = "Client non assigné";
+                    String emailClient = "N/A";
+                    String statut = "Inactif";
+
+                    if (membre.getClient() != null) {
+                        Client client = membre.getClient();
+                        nomComplet = (client.getPrenom() != null ? client.getPrenom() : "") + " " +
+                                    (client.getNom() != null ? client.getNom() : "");
+                        emailClient = client.getEmail() != null ? client.getEmail() : "N/A";
+                        statut = "Actif";
+                    }
+
+                    tableModel.addRow(new Object[]{
+                        false,
+                        membre.getId(),
+                        dateInscription,
+                        nomComplet,
+                        emailClient,
+                        statut
+                    });
+                } catch (Exception e) {
+                    System.err.println("Erreur lors du traitement du membre ID " + membre.getId() + ": " + e.getMessage());
+                    // Continuer avec le membre suivant
+                }
+            }
+
+            System.out.println("INFO: " + membres.size() + " membre(s) chargé(s) dans le tableau");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erreur lors du chargement des membres : " + e.getMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -539,3 +570,4 @@ public class MembrePanel extends JPanel implements CrudOperationsInterface {
             JOptionPane.INFORMATION_MESSAGE);
     }
 }
+

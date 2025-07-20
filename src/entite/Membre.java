@@ -26,7 +26,11 @@ public class Membre extends GenericEntity{
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Client client;
-    
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_seance")
+    private Seance seance;
+
     public Membre(){
         
     }
@@ -66,6 +70,14 @@ public class Membre extends GenericEntity{
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public Seance getSeance() {
+        return seance;
+    }
+
+    public void setSeance(Seance seance) {
+        this.seance = seance;
     }
 
     @Override

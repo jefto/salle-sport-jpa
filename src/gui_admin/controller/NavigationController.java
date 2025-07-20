@@ -47,6 +47,7 @@ public class NavigationController {
         panelFactory.put("Seance", SeancePanel::new);
         panelFactory.put("Tickets", TicketPanel::new);
         panelFactory.put("Types Abonnements", TypeAbonnementPanel::new);
+        panelFactory.put("Notifications", NotificationPanel::new);
     }
     
     /**

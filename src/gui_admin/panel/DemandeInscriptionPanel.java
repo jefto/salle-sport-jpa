@@ -2,15 +2,21 @@ package gui_admin.panel;
 
 import entite.DemandeInscription;
 import entite.Client;
+import entite.Membre;
 import service.DemandeInscriptionService;
 import service.ClientService;
+import service.MembreService;
 import gui_util.StyleUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -21,6 +27,7 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
     private DemandeInscription demandeSelectionnee;
     private DemandeInscriptionService demandeInscriptionService;
     private ClientService clientService;
+    private MembreService membreService;
     private DefaultTableModel tableModel;
     private JTable table;
 
@@ -28,7 +35,8 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         this.setLayout(new BorderLayout());
         this.demandeInscriptionService = new DemandeInscriptionService();
         this.clientService = new ClientService();
-        
+        this.membreService = new MembreService();
+
         initializeTable();
         loadData();
     }
@@ -44,11 +52,22 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
                 }
                 return Object.class;
             }
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Rendre la colonne statut éditable pour les boutons
+                return column == 0 || column == 5;
+            }
         };
 
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setPreferredWidth(70);
-        
+        table.getColumnModel().getColumn(5).setPreferredWidth(150);
+
+        // Configurer le renderer et l'éditeur pour la colonne Statut
+        table.getColumnModel().getColumn(5).setCellRenderer(new StatusCellRenderer());
+        table.getColumnModel().getColumn(5).setCellEditor(new StatusCellEditor());
+
         // Styliser l'en-tête
         StyleUtil.styliserTableHeader(table);
 
@@ -79,6 +98,198 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         this.add(scrollPane, BorderLayout.CENTER);
     }
 
+    // Classe pour le rendu des cellules de statut
+    private class StatusCellRenderer extends JPanel implements TableCellRenderer {
+        private JButton acceptButton;
+        private JButton rejectButton;
+        private JLabel statusLabel;
+
+        public StatusCellRenderer() {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+            // Utiliser du texte simple au lieu de caractères spéciaux pour éviter les problèmes d'encodage
+            acceptButton = new JButton("OK");
+            acceptButton.setBackground(Color.GREEN);
+            acceptButton.setForeground(Color.WHITE);
+            acceptButton.setPreferredSize(new Dimension(45, 25));
+            acceptButton.setFont(new Font("Arial", Font.BOLD, 10));
+
+            rejectButton = new JButton("NO");
+            rejectButton.setBackground(Color.RED);
+            rejectButton.setForeground(Color.WHITE);
+            rejectButton.setPreferredSize(new Dimension(45, 25));
+            rejectButton.setFont(new Font("Arial", Font.BOLD, 10));
+
+            statusLabel = new JLabel();
+            statusLabel.setOpaque(true);
+            statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            statusLabel.setPreferredSize(new Dimension(100, 25));
+            statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+
+            removeAll();
+
+            if (row < demandesInscription.size()) {
+                DemandeInscription demande = demandesInscription.get(row);
+
+                if (demande.getDateDeTraitement() == null) {
+                    // Demande en attente - afficher les boutons
+                    add(acceptButton);
+                    add(rejectButton);
+                    setBackground(Color.WHITE);
+                } else {
+                    // Demande traitée - afficher le statut
+                    String statut = (String) value;
+                    if ("Accepté".equals(statut)) {
+                        statusLabel.setText("ACCEPTÉ");
+                        statusLabel.setBackground(Color.GREEN);
+                        statusLabel.setForeground(Color.WHITE);
+                    } else {
+                        statusLabel.setText("REJETÉ");
+                        statusLabel.setBackground(Color.RED);
+                        statusLabel.setForeground(Color.WHITE);
+                    }
+                    add(statusLabel);
+                    setBackground(statusLabel.getBackground());
+                }
+            }
+
+            return this;
+        }
+    }
+
+    // Classe pour l'édition des cellules de statut
+    private class StatusCellEditor extends AbstractCellEditor implements TableCellEditor {
+        private JPanel panel;
+        private JButton acceptButton;
+        private JButton rejectButton;
+        private String currentValue;
+        private int currentRow;
+
+        public StatusCellEditor() {
+            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+
+            // Utiliser du texte simple au lieu de caractères spéciaux
+            acceptButton = new JButton("OK");
+            acceptButton.setBackground(Color.GREEN);
+            acceptButton.setForeground(Color.WHITE);
+            acceptButton.setPreferredSize(new Dimension(45, 25));
+            acceptButton.setFont(new Font("Arial", Font.BOLD, 10));
+
+            rejectButton = new JButton("NO");
+            rejectButton.setBackground(Color.RED);
+            rejectButton.setForeground(Color.WHITE);
+            rejectButton.setPreferredSize(new Dimension(45, 25));
+            rejectButton.setFont(new Font("Arial", Font.BOLD, 10));
+
+            acceptButton.addActionListener(e -> {
+                accepterDemande(currentRow);
+                currentValue = "Accepté"; // Forcer la valeur à "Accepté"
+                fireEditingStopped();
+            });
+
+            rejectButton.addActionListener(e -> {
+                rejeterDemande(currentRow);
+                currentValue = "Rejeté"; // Forcer la valeur à "Rejeté"
+                fireEditingStopped();
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+
+            currentValue = (String) value;
+            currentRow = row;
+
+            panel.removeAll();
+            panel.add(acceptButton);
+            panel.add(rejectButton);
+
+            return panel;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return currentValue;
+        }
+    }
+
+    private void accepterDemande(int row) {
+        try {
+            DemandeInscription demande = demandesInscription.get(row);
+
+            // Mettre à jour la date de traitement
+            demande.setDateDeTraitement(LocalDateTime.now());
+
+            // Créer un nouveau membre automatiquement
+            if (demande.getClient() != null) {
+                Membre nouveauMembre = new Membre();
+                nouveauMembre.setClient(demande.getClient());
+                nouveauMembre.setDateInscription(LocalDateTime.now());
+
+                membreService.ajouter(nouveauMembre);
+            }
+
+            // Modifier la demande en base de données
+            demandeInscriptionService.modifier(demande);
+
+            // Mettre à jour l'affichage immédiatement
+            tableModel.setValueAt("Accepté", row, 5);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            tableModel.setValueAt(demande.getDateDeTraitement().format(formatter), row, 3);
+
+            // Rafraîchir l'affichage du tableau
+            table.repaint();
+
+            JOptionPane.showMessageDialog(this,
+                "Demande acceptée avec succès!\nNouveau membre créé automatiquement.",
+                "Demande acceptée",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erreur lors de l'acceptation: " + e.getMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void rejeterDemande(int row) {
+        try {
+            DemandeInscription demande = demandesInscription.get(row);
+
+            // Mettre à jour la date de traitement
+            demande.setDateDeTraitement(LocalDateTime.now());
+
+            // Modifier la demande en base de données
+            demandeInscriptionService.modifier(demande);
+
+            // Mettre à jour l'affichage immédiatement
+            tableModel.setValueAt("Rejeté", row, 5);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            tableModel.setValueAt(demande.getDateDeTraitement().format(formatter), row, 3);
+
+            // Rafraîchir l'affichage du tableau
+            table.repaint();
+
+            JOptionPane.showMessageDialog(this,
+                "Demande rejetée.",
+                "Demande rejetée",
+                JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Erreur lors du rejet: " + e.getMessage(),
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void loadData() {
         // Vider le modèle
         tableModel.setRowCount(0);
@@ -89,8 +300,16 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         
         for (DemandeInscription demande : demandesInscription) {
-            String statut = demande.getDateDeTraitement() != null ? "Traitée" : "En attente";
-            
+            String statut;
+            if (demande.getDateDeTraitement() == null) {
+                statut = "En attente";
+            } else {
+                // Ici nous devons déterminer si c'est accepté ou rejeté
+                // Pour cet exemple, nous supposons qu'il y a un champ statut dans DemandeInscription
+                // Sinon, nous pouvons vérifier s'il y a un membre correspondant
+                statut = verifierStatutDemande(demande);
+            }
+
             tableModel.addRow(new Object[]{
                 false,
                 demande.getId(),
@@ -100,6 +319,36 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
                 statut
             });
         }
+    }
+
+    private String verifierStatutDemande(DemandeInscription demande) {
+        if (demande.getDateDeTraitement() == null) {
+            return "En attente";
+        }
+
+        // Vérifier s'il existe un membre pour ce client
+        try {
+            List<Membre> membres = membreService.listerTous();
+            for (Membre membre : membres) {
+                if (membre.getClient() != null && demande.getClient() != null &&
+                    membre.getClient().getId().equals(demande.getClient().getId())) {
+
+                    // Si on trouve un membre avec le même client, c'est accepté
+                    // Vérifier si la date d'inscription est proche de la date de traitement
+                    if (membre.getDateInscription() != null &&
+                        Math.abs(java.time.Duration.between(
+                            membre.getDateInscription(),
+                            demande.getDateDeTraitement()).toHours()) <= 24) {
+                        return "Accepté";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification du statut: " + e.getMessage());
+        }
+
+        // Si pas de membre trouvé et que la demande est traitée, c'est rejeté
+        return "Rejeté";
     }
 
     @Override
@@ -364,3 +613,4 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         }
     }
 }
+

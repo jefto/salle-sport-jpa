@@ -277,116 +277,58 @@ public class AccueilClientPanel extends JPanel {
     }
     
 private JPanel createSubscriptionsSection() {
-    JPanel sectionPanel = new JPanel(new BorderLayout());
-    sectionPanel.setBackground(Color.WHITE);
-    sectionPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
-    
-    // Titre
-    JLabel titleLabel = new JLabel("Nos Abonnements", SwingConstants.CENTER);
-    titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-    titleLabel.setForeground(new Color(74, 41, 0));
-    titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
-    
-    // Container pour les cartes d'abonnement
-    JPanel containerPanel = new JPanel();
-    containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.X_AXIS));
-    containerPanel.setBackground(Color.WHITE);
-    
-    // Données des abonnements
-    String[] types = {"Hebdomadaire", "Mensuel", "Annuel"};
-    String[] prices = {"25€", "80€", "800€"};
-    String[] descriptions = {
-        "Accès 1 semaine\n• Toutes les salles\n• Équipements standard",
-        "Accès 1 mois\n• Toutes les salles\n• Équipements premium\n• 2 séances coaching",
-        "Accès 1 an\n• Toutes les salles\n• Équipements premium\n• Coaching illimité\n• Suivi personnalisé"
-    };
-    
-    Color[] colors = {
-        new Color(52, 152, 219),
-        new Color(46, 204, 113),
-        new Color(155, 89, 182)
-    };
-    
-    for (int i = 0; i < types.length; i++) {
-        containerPanel.add(createSubscriptionCard(types[i], prices[i], descriptions[i], colors[i]));
-        if (i < types.length - 1) {
-            containerPanel.add(Box.createHorizontalStrut(10));
-        }
-    }
-    
-    // Centrer le container des cartes
-    JPanel centeringPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-    centeringPanel.setBackground(Color.WHITE);
-    centeringPanel.add(containerPanel);
-    
-    // Assembler la section complète
-    sectionPanel.add(titleLabel, BorderLayout.NORTH);
-    sectionPanel.add(centeringPanel, BorderLayout.CENTER);
-    
-    return sectionPanel;
-}
-    
-    private JPanel createSubscriptionCard(String type, String price, String description, Color color) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(color, 3),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        card.setPreferredSize(new Dimension(280, 300));
-        card.setMaximumSize(new Dimension(300, 300));
-        
-        // En-tête
-        JLabel typeLabel = new JLabel(type, SwingConstants.CENTER);
-        typeLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        typeLabel.setForeground(color);
-        
-        // Prix
-        JLabel priceLabel = new JLabel(price, SwingConstants.CENTER);
-        priceLabel.setFont(new Font("Arial", Font.BOLD, 32));
-        priceLabel.setForeground(color);
-        
+        JPanel sectionPanel = new JPanel(new BorderLayout());
+        sectionPanel.setBackground(Color.WHITE);
+        sectionPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
+
+        // Titre de la section
+        JLabel titleLabel = new JLabel("Nos Abonnements", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(74, 41, 0));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+
         // Description
-        JLabel descLabel = new JLabel("<html><center>" + description.replace("\n", "<br>") + "</center></html>");
-        descLabel.setFont(new Font("Arial", Font.PLAIN, 13));
-        descLabel.setForeground(Color.DARK_GRAY);
-        descLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        // Bouton
-        JButton chooseButton = new JButton("Choisir");
-        chooseButton.setFont(new Font("Arial", Font.BOLD, 14));
-        chooseButton.setBackground(color);
-        chooseButton.setForeground(Color.WHITE);
-        chooseButton.setFocusPainted(false);
-        chooseButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        chooseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        chooseButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                chooseButton.setBackground(color.darker());
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                chooseButton.setBackground(color);
+        JLabel descriptionLabel = new JLabel("Choisissez l'abonnement qui correspond à vos besoins", SwingConstants.CENTER);
+        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        descriptionLabel.setForeground(Color.GRAY);
+        descriptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
+
+        // Panel d'en-tête avec titre et description
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        headerPanel.add(descriptionLabel, BorderLayout.SOUTH);
+
+        // Utiliser notre composant AbonnementBoxPanel qui récupère automatiquement les données
+        AbonnementBoxPanel abonnementBoxPanel = new AbonnementBoxPanel();
+
+        // Bouton pour voir plus d'abonnements
+        JButton voirPlusBtn = new JButton("Voir tous nos abonnements");
+        voirPlusBtn.setBackground(new Color(74, 41, 0));
+        voirPlusBtn.setForeground(Color.WHITE);
+        voirPlusBtn.setFont(new Font("Arial", Font.BOLD, 14));
+        voirPlusBtn.setFocusPainted(false);
+        voirPlusBtn.setBorderPainted(false);
+        voirPlusBtn.setPreferredSize(new Dimension(200, 40));
+
+        voirPlusBtn.addActionListener(e -> {
+            // Navigation vers la page des abonnements
+            if (navigationController != null) {
+                navigationController.navigateToPage("Abonnements");
             }
         });
-        
-        JPanel headerPanel = new JPanel(new GridLayout(2, 1));
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.add(typeLabel);
-        headerPanel.add(priceLabel);
-        
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.add(chooseButton);
-        
-        card.add(headerPanel, BorderLayout.NORTH);
-        card.add(descLabel, BorderLayout.CENTER);
-        card.add(buttonPanel, BorderLayout.SOUTH);
-        
-        return card;
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        buttonPanel.add(voirPlusBtn);
+
+        // Assembler la section
+        sectionPanel.add(headerPanel, BorderLayout.NORTH);
+        sectionPanel.add(abonnementBoxPanel, BorderLayout.CENTER);
+        sectionPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return sectionPanel;
     }
     
     private JPanel createActionButtonsSection() {
