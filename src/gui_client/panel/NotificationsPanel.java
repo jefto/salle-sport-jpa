@@ -90,9 +90,14 @@ public class NotificationsPanel extends JPanel {
         notificationsListPanel.setLayout(new BoxLayout(notificationsListPanel, BoxLayout.Y_AXIS));
         notificationsListPanel.setBackground(Color.WHITE);
 
-        scrollPane = new JScrollPane(notificationsListPanel);
+        // JScrollPane qui occupe tout l'espace central et est toujours déroulant
+        scrollPane = new JScrollPane(notificationsListPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 30, 30, 30));
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setPreferredSize(new Dimension(0, 0));
+        scrollPane.getViewport().setBackground(Color.WHITE);
 
         add(scrollPane, BorderLayout.CENTER);
     }
@@ -212,7 +217,8 @@ public class NotificationsPanel extends JPanel {
             Seance seance = seanceDao.trouver(seanceId);
 
             if (membre != null && seance != null) {
-                new TicketDialog(membre, seance).setVisible(true);
+                // Ouvre la même fenêtre de ticket que dans SeancesPanel
+                new gui_client.panel.TicketDialog(membre, seance).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this,
                     "Impossible de récupérer les informations du ticket.",

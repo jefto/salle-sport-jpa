@@ -27,12 +27,15 @@ public class Abonnement extends GenericEntity{
     private LocalDateTime dateFin;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_type_abonnement")
     private TypeAbonnement typeAbonnement;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_paiement")
     private Paiement paiement;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_membre")
     private Membre membre;
     
     public Abonnement(){

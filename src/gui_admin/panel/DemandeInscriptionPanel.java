@@ -226,11 +226,18 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
             // Mettre à jour la date de traitement
             demande.setDateDeTraitement(LocalDateTime.now());
 
+            // Essayer de mettre à jour le statut si la colonne existe
+            try {
+                demande.setStatut("ACCEPTE");
+            } catch (Exception e) {
+                System.out.println("Champ statut non disponible, utilisation de la logique de fallback");
+            }
+
             // Créer un nouveau membre automatiquement
             if (demande.getClient() != null) {
                 Membre nouveauMembre = new Membre();
                 nouveauMembre.setClient(demande.getClient());
-                nouveauMembre.setDateInscription(LocalDateTime.now());
+                nouveauMembre.setDateInscription(demande.getDateDeTraitement()); // Utiliser la date de traitement comme date d'inscription
 
                 membreService.ajouter(nouveauMembre);
             }
@@ -247,7 +254,7 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
             table.repaint();
 
             JOptionPane.showMessageDialog(this,
-                "Demande acceptée avec succès!\nNouveau membre créé automatiquement.",
+                "Demande acceptée avec succès!\nNouveau membre créé automatiquement.\nLe client peut maintenant se connecter à son espace membre.",
                 "Demande acceptée",
                 JOptionPane.INFORMATION_MESSAGE);
 
@@ -263,10 +270,31 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         try {
             DemandeInscription demande = demandesInscription.get(row);
 
+            // Confirmer le rejet
+            int confirmation = JOptionPane.showConfirmDialog(this,
+                "Êtes-vous sûr de vouloir rejeter cette demande ?\n" +
+                "La demande de " + demande.getClient().getPrenom() + " " + demande.getClient().getNom() +
+                " sera marquée comme rejetée.\n" +
+                "Le client ne pourra pas se connecter mais ses données seront conservées.",
+                "Confirmer le rejet",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+            if (confirmation != JOptionPane.YES_OPTION) {
+                return;
+            }
+
             // Mettre à jour la date de traitement
             demande.setDateDeTraitement(LocalDateTime.now());
 
-            // Modifier la demande en base de données
+            // Essayer de mettre à jour le statut si la colonne existe
+            try {
+                demande.setStatut("REJETE");
+            } catch (Exception e) {
+                System.out.println("Champ statut non disponible, utilisation de la logique de fallback");
+            }
+
+            // Modifier la demande en base de données (SANS supprimer le client)
             demandeInscriptionService.modifier(demande);
 
             // Mettre à jour l'affichage immédiatement
@@ -278,11 +306,12 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
             table.repaint();
 
             JOptionPane.showMessageDialog(this,
-                "Demande rejetée.",
+                "Demande rejetée avec succès.\nLes données du client ont été conservées.\nLe client ne pourra pas se connecter.",
                 "Demande rejetée",
                 JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(this,
                 "Erreur lors du rejet: " + e.getMessage(),
                 "Erreur",
@@ -326,7 +355,20 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
             return "En attente";
         }
 
-        // Vérifier s'il existe un membre pour ce client
+        // Essayer d'utiliser le champ statut s'il existe, sinon utiliser la logique de fallback
+        try {
+            if (demande.getStatut() != null) {
+                if ("ACCEPTE".equals(demande.getStatut())) {
+                    return "Accepté";
+                } else if ("REJETE".equals(demande.getStatut())) {
+                    return "Rejeté";
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Champ statut non disponible, utilisation de la logique de fallback");
+        }
+
+        // Fallback : vérifier s'il existe un membre pour ce client
         try {
             List<Membre> membres = membreService.listerTous();
             for (Membre membre : membres) {
@@ -355,7 +397,7 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
     public void ajouter() {
         // Récupérer la liste des clients
         List<Client> clients = clientService.listerTous();
-        
+
         if (clients.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
                 "Aucun client disponible. Veuillez d'abord créer un client.", 
@@ -613,4 +655,3 @@ public class DemandeInscriptionPanel extends JPanel implements CrudOperationsInt
         }
     }
 }
-

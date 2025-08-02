@@ -19,7 +19,7 @@ public class Equipement extends GenericEntity{
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_salle", nullable = false)
+    @JoinColumn(name = "id_salle", nullable = false, referencedColumnName = "id")
     private Salle salle;
 
 

@@ -120,7 +120,7 @@ public class TicketDialog extends JDialog {
         addInfoRow(panel, gbc, 4, "🕐 Heure de début :", seance.getDateDebut().format(timeFormatter));
         addInfoRow(panel, gbc, 5, "🕑 Heure de fin :", seance.getDateFin().format(timeFormatter));
         addInfoRow(panel, gbc, 6, "🏢 Salle :", seance.getSalle() != null ? seance.getSalle().getLibelle() : "Non définie");
-        addInfoRow(panel, gbc, 7, "👥 Participants :", seance.getNombreMembres() + " membre(s) inscrit(s)");
+        //addInfoRow(panel, gbc, 7, "👥 Participants :", seance.getNombreMembres() + " membre(s) inscrit(s)");
 
         return panel;
     }

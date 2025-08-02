@@ -1,12 +1,13 @@
 package gui_client.panel;
 
 import service.AuthService;
-import service.UserSessionManager;
-import entite.Client;
+import service.AuthService.LoginResult;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class InscriptionPanel extends GenericAuthentificationPanel {
@@ -15,143 +16,192 @@ public class InscriptionPanel extends GenericAuthentificationPanel {
     private JTextField prenomField;
     private JTextField emailField;
     private JPasswordField passwordField;
+    private JPasswordField confirmPasswordField;
     private JSpinner dateNaissanceSpinner;
-    private AuthService authService;
 
     public InscriptionPanel() {
         super("inscription");
-        this.authService = AuthService.getInstance();
-        initializeInputs();
-        configureActions();
+        createFormFields();
+        setupEventHandlers();
     }
 
-    private void initializeInputs() {
-        // Ajouter les champs spécifiques à l'inscription
-        nomField = addTextInput("Nom");
-        prenomField = addTextInput("Prénom");
-        emailField = addTextInput("Email");
-        passwordField = addPasswordInput("Mot de passe");
-        dateNaissanceSpinner = addDateTimeInput("Date et heure de naissance");
+    private void createFormFields() {
+        // Créer les champs du formulaire
+        nomField = addTextInput("Nom :");
+        prenomField = addTextInput("Prénom :");
+        emailField = addTextInput("Email :");
+        passwordField = addPasswordInput("Mot de passe :");
+        confirmPasswordField = addPasswordInput("Confirmer :");
+        dateNaissanceSpinner = addDateTimeInput("Date naissance :");
+
+        // Configurer le spinner de date pour afficher seulement la date
+        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dateNaissanceSpinner, "dd/MM/yyyy");
+        dateNaissanceSpinner.setEditor(dateEditor);
+
+        // Définir une date par défaut (il y a 18 ans)
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.add(java.util.Calendar.YEAR, -18);
+        dateNaissanceSpinner.setValue(cal.getTime());
     }
 
-    private void configureActions() {
+    private void setupEventHandlers() {
         // Action du bouton d'inscription
-        setActionButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleInscription();
-            }
-        });
+        setActionButtonListener(e -> handleInscription());
 
-        // Action pour changer vers la connexion
-        setSwitchModeListener(new java.awt.event.MouseAdapter() {
+        // Lien vers la page de connexion
+        setSwitchModeListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                navigateToConnexion(); // Utilise la méthode de la classe parent
+            public void mouseClicked(MouseEvent e) {
+                navigateToConnexion();
             }
         });
     }
 
     private void handleInscription() {
+        // Nettoyer les messages d'erreur précédents
+        clearErrorMessages();
+
+        // Récupérer les valeurs des champs
         String nom = nomField.getText().trim();
         String prenom = prenomField.getText().trim();
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
         Date dateNaissance = (Date) dateNaissanceSpinner.getValue();
 
-        // Effacer les anciens messages d'erreur
-        clearErrorMessages();
+        // Validation des champs
+        boolean hasErrors = false;
 
-        // Validation basique
-        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Veuillez remplir tous les champs", 
-                "Erreur", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
+        if (nom.isEmpty()) {
+            addErrorMessage(nomField, "Le nom est obligatoire");
+            hasErrors = true;
         }
 
-        // Validation email basique
-        if (!email.contains("@") || !email.contains(".")) {
+        if (prenom.isEmpty()) {
+            addErrorMessage(prenomField, "Le prénom est obligatoire");
+            hasErrors = true;
+        }
+
+        if (email.isEmpty()) {
+            addErrorMessage(emailField, "L'email est obligatoire");
+            hasErrors = true;
+        } else if (!isValidEmail(email)) {
             addErrorMessage(emailField, "Format d'email invalide");
-            return;
+            hasErrors = true;
         }
 
-        // Validation mot de passe (minimum 6 caractères)
-        if (password.length() < 6) {
+        if (password.isEmpty()) {
+            addErrorMessage(passwordField, "Le mot de passe est obligatoire");
+            hasErrors = true;
+        } else if (password.length() < 6) {
             addErrorMessage(passwordField, "Le mot de passe doit contenir au moins 6 caractères");
+            hasErrors = true;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            addErrorMessage(confirmPasswordField, "Les mots de passe ne correspondent pas");
+            hasErrors = true;
+        }
+
+        // Vérifier l'âge minimum (13 ans)
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.add(java.util.Calendar.YEAR, -13);
+        if (dateNaissance.after(cal.getTime())) {
+            JOptionPane.showMessageDialog(this,
+                "Vous devez avoir au moins 13 ans pour vous inscrire.",
+                "Âge insuffisant",
+                JOptionPane.WARNING_MESSAGE);
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
             return;
         }
 
-        // Inscription
-        AuthService.LoginResult result = authService.register(nom, prenom, email, password, dateNaissance);
+        // Tenter l'inscription
+        try {
+            AuthService authService = AuthService.getInstance();
+            LoginResult result = authService.register(nom, prenom, email, password, dateNaissance);
 
-        if (result.isSuccess()) {
-            // Inscription réussie
-            Client client = result.getClient();
-            UserSessionManager.getInstance().login(client);
+            if (result.isSuccess()) {
+                // Inscription réussie, mais en attente d'approbation
+                JOptionPane.showMessageDialog(this,
+                    "<html><div style='text-align: center;'>" +
+                    "<h3>Inscription en cours de traitement</h3>" +
+                    "<p>Votre demande d'inscription a été envoyée avec succès !</p>" +
+                    "<p>Un administrateur va examiner votre demande.</p>" +
+                    "<p>Vous recevrez une notification une fois votre compte approuvé.</p>" +
+                    "<p>Vous pourrez alors vous connecter à votre espace membre.</p>" +
+                    "</div></html>",
+                    "Inscription en attente",
+                    JOptionPane.INFORMATION_MESSAGE);
 
-            // Afficher un message de succès
+                // Rediriger vers la page de connexion
+                navigateToConnexion();
+
+            } else {
+                // Gérer les différents types d'erreurs
+                handleRegistrationError(result.getErrorCode());
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Inscription réussie ! Bienvenue " + client.getPrenom() + " " + client.getNom(),
-                "Succès",
-                JOptionPane.INFORMATION_MESSAGE);
-
-            // Rediriger vers la page d'accueil
-            if (navigationController != null) {
-                navigationController.navigateToPage("Accueil");
-            }
-
-        } else {
-            // Inscription échouée
-            switch (result.getErrorCode()) {
-                case "EMAIL_ALREADY_EXISTS":
-                    addErrorMessage(emailField, "Cet email est déjà utilisé");
-                    break;
-                case "DATABASE_CONNECTION_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Impossible de se connecter à la base de données.\n\n" +
-                        "Veuillez vérifier que :\n" +
-                        "1. Le service MySQL/MariaDB est démarré\n" +
-                        "2. Votre connexion réseau fonctionne correctement\n" +
-                        "3. Les paramètres de connexion sont corrects\n\n" +
-                        "Pour démarrer le service MySQL/MariaDB :\n" +
-                        "- Ouvrez les Services Windows (services.msc)\n" +
-                        "- Recherchez le service 'MySQL' ou 'MariaDB'\n" +
-                        "- Cliquez-droit et sélectionnez 'Démarrer'",
-                        "Erreur de connexion",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_ACCESS_DENIED":
-                    JOptionPane.showMessageDialog(this,
-                        "Accès à la base de données refusé. Veuillez contacter l'administrateur.",
-                        "Erreur d'accès",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_NOT_FOUND":
-                    JOptionPane.showMessageDialog(this,
-                        "Base de données introuvable. Veuillez contacter l'administrateur.",
-                        "Erreur de configuration",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Erreur de base de données. Veuillez réessayer ultérieurement.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "UNEXPECTED_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Une erreur inattendue s'est produite. Veuillez réessayer ultérieurement.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(this,
-                        "Erreur inconnue. Veuillez réessayer.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+                "Une erreur inattendue s'est produite lors de l'inscription.\n" +
+                "Veuillez réessayer plus tard.",
+                "Erreur système",
+                JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void handleRegistrationError(String errorCode) {
+        String message;
+        String title = "Erreur d'inscription";
+
+        switch (errorCode) {
+            case "EMAIL_ALREADY_EXISTS":
+                message = "Cette adresse email est déjà utilisée.\nVeuillez utiliser une autre adresse email.";
+                addErrorMessage(emailField, "Cette adresse email est déjà utilisée");
+                break;
+
+            case "DATABASE_CONNECTION_ERROR":
+                message = "Impossible de se connecter à la base de données.\nVérifiez votre connexion et réessayez.";
+                title = "Erreur de connexion";
+                break;
+
+            case "DATABASE_ERROR":
+                message = "Une erreur de base de données s'est produite.\nVeuillez réessayer plus tard.";
+                title = "Erreur de base de données";
+                break;
+
+            default:
+                message = "Une erreur inattendue s'est produite.\nVeuillez réessayer plus tard.";
+                title = "Erreur";
+                break;
+        }
+
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+    }
+
+    private boolean isValidEmail(String email) {
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    }
+
+    /**
+     * Méthode pour réinitialiser le formulaire
+     */
+    public void resetForm() {
+        nomField.setText("");
+        prenomField.setText("");
+        emailField.setText("");
+        passwordField.setText("");
+        confirmPasswordField.setText("");
+
+        // Remettre la date par défaut
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.add(java.util.Calendar.YEAR, -18);
+        dateNaissanceSpinner.setValue(cal.getTime());
+
+        clearErrorMessages();
     }
 }

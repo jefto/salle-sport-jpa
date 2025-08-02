@@ -61,7 +61,7 @@ public class ClientDashboard extends JFrame {
         JPanel menuPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         menuPanel.setBackground(new Color(74, 41, 0));
         
-        String[] menuItems = {"Accueil", "Séances", "Abonnements", "Profil", "Notifications"};
+        String[] menuItems = {"Accueil", "Abonnements", "Profil", "Notifications"};
         
         for (String item : menuItems) {
             JButton menuButton = createMenuButton(item);

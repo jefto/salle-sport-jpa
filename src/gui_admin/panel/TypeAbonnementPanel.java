@@ -23,16 +23,11 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
     // Pattern pour validation du code (lettres, chiffres, tirets et underscores)
     private static final Pattern CODE_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,20}$");
     
-    // Préconfigurations de types d'abonnement courantes
+    // Préconfigurations fixes pour les types d'abonnement
     private static final Object[][] PRECONFIGURATIONS = {
-        {"BASIC", "Abonnement Basic", 29},
-        {"STANDARD", "Abonnement Standard", 49},
-        {"PREMIUM", "Abonnement Premium", 79},
-        {"VIP", "Abonnement VIP", 129},
-        {"ETUDIANT", "Abonnement Étudiant", 19},
-        {"SENIOR", "Abonnement Senior", 39},
-        {"FAMILLE", "Abonnement Famille", 99},
-        {"ANNUEL", "Abonnement Annuel", 299}
+        {"BASIC", "Basic", 5000},
+        {"STANDARD", "Standard", 15000},
+        {"PREMIUM", "Prenium", 25000}
     };
 
     public TypeAbonnementPanel() {
@@ -44,7 +39,7 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
     }
 
     private void initializeTable() {
-        String[] colonnes = {"Sélection", "Code", "Libellé", "Montant", "Catégorie", "Rapport Q/P"};
+        String[] colonnes = {"Sélection", "Code", "Libellé", "Montant"};
 
         tableModel = new DefaultTableModel(colonnes, 0) {
             @Override
@@ -57,12 +52,11 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
         };
 
         table = new JTable(tableModel);
-        table.getColumnModel().getColumn(0).setPreferredWidth(70);
-        table.getColumnModel().getColumn(1).setPreferredWidth(100);
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);
-        table.getColumnModel().getColumn(4).setPreferredWidth(100);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
-        
+        table.getColumnModel().getColumn(0).setPreferredWidth(70);   // Sélection
+        table.getColumnModel().getColumn(1).setPreferredWidth(100);  // Code
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);  // Libellé
+        table.getColumnModel().getColumn(3).setPreferredWidth(120);  // Montant
+
         // Styliser l'en-tête
         StyleUtil.styliserTableHeader(table);
 
@@ -94,26 +88,14 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
     }
 
     private void loadData() {
-        // Vider le modèle
         tableModel.setRowCount(0);
-        
-        // Charger les données
         typesAbonnement = typeAbonnementService.listerTous();
-        
         for (TypeAbonnement type : typesAbonnement) {
-            // Déterminer la catégorie
-            String categorie = determinerCategorie(type);
-            
-            // Calculer le rapport qualité-prix
-            String rapportQP = calculerRapportQualitePrix(type);
-            
             tableModel.addRow(new Object[]{
                 false,
                 type.getCode(),
                 type.getLibelle(),
-                type.getMontant() + "€",
-                categorie,
-                rapportQP
+                type.getMontant() + " FCFA"
             });
         }
     }
@@ -122,32 +104,8 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
      * Détermine la catégorie d'un type d'abonnement
      */
     private String determinerCategorie(TypeAbonnement type) {
-        String code = type.getCode().toUpperCase();
-        String libelle = type.getLibelle().toUpperCase();
-        
-        if (code.contains("ETUDIANT") || libelle.contains("ÉTUDIANT") || libelle.contains("ETUDIANT")) {
-            return "Étudiant";
-        } else if (code.contains("SENIOR") || libelle.contains("SENIOR")) {
-            return "Senior";
-        } else if (code.contains("FAMILLE") || libelle.contains("FAMILLE")) {
-            return "Famille";
-        } else if (code.contains("VIP") || libelle.contains("VIP")) {
-            return "VIP";
-        } else if (code.contains("PREMIUM") || libelle.contains("PREMIUM")) {
-            return "Premium";
-        } else if (code.contains("BASIC") || libelle.contains("BASIC") || libelle.contains("BASE")) {
-            return "Basic";
-        } else if (code.contains("ANNUEL") || libelle.contains("ANNUEL") || libelle.contains("AN")) {
-            return "Annuel";
-        } else if (type.getMontant() <= 20) {
-            return "Économique";
-        } else if (type.getMontant() <= 50) {
-            return "Standard";
-        } else if (type.getMontant() <= 100) {
-            return "Premium";
-        } else {
-            return "Luxury";
-        }
+        // Pour 3 formules, la catégorie est le libellé
+        return type.getLibelle();
     }
     
     /**
@@ -155,192 +113,122 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
      */
     private String calculerRapportQualitePrix(TypeAbonnement type) {
         int montant = type.getMontant();
-        
-        if (montant <= 0) {
-            return "Gratuit";
-        } else if (montant <= 25) {
-            return "Excellent";
-        } else if (montant <= 50) {
-            return "Bon";
-        } else if (montant <= 100) {
-            return "Correct";
-        } else {
-            return "Cher";
-        }
+        if (montant == 5000) return "Économique";
+        if (montant == 15000) return "Standard";
+        if (montant == 25000) return "Premium";
+        return "Inconnu";
     }
 
     @Override
     public void ajouter() {
-        // Créer un formulaire avec choix entre préconfiguration et saisie libre
-        JPanel formulaire = new JPanel(new BorderLayout(10, 10));
-        
-        // Section choix du type
-        JPanel choixPanel = new JPanel(new FlowLayout());
-        JRadioButton preconfigureBouton = new JRadioButton("Type prédéfini", true);
-        JRadioButton personnaliseBouton = new JRadioButton("Type personnalisé");
-        ButtonGroup groupe = new ButtonGroup();
-        groupe.add(preconfigureBouton);
-        groupe.add(personnaliseBouton);
-        
-        choixPanel.add(new JLabel("Mode : "));
-        choixPanel.add(preconfigureBouton);
-        choixPanel.add(personnaliseBouton);
-        
-        // Section saisie
-        JPanel saisiePanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        
-        // ComboBox pour préconfigurations
-        JComboBox<String> preconfigCombo = new JComboBox<>();
-        for (Object[] config : PRECONFIGURATIONS) {
-            preconfigCombo.addItem(String.format("%s - %s (%d€)", 
-                config[0], config[1], config[2]));
-        }
-        
-        // Champs personnalisés
+        // Créer un formulaire de saisie manuelle
+        JPanel formulaire = new JPanel(new GridLayout(3, 2, 10, 10));
         JTextField codeField = new JTextField();
         JTextField libelleField = new JTextField();
         JTextField montantField = new JTextField();
-        
-        saisiePanel.add(new JLabel("Types prédéfinis :"));
-        saisiePanel.add(preconfigCombo);
-        saisiePanel.add(new JLabel("Code (max 20 caractères) :"));
-        saisiePanel.add(codeField);
-        saisiePanel.add(new JLabel("Libellé :"));
-        saisiePanel.add(libelleField);
-        saisiePanel.add(new JLabel("Montant (€) :"));
-        saisiePanel.add(montantField);
-        
-        formulaire.add(choixPanel, BorderLayout.NORTH);
-        formulaire.add(saisiePanel, BorderLayout.CENTER);
-        
-        // Gérer l'activation/désactivation des champs
-        preconfigureBouton.addActionListener(e -> {
-            preconfigCombo.setEnabled(true);
-            codeField.setEnabled(false);
-            libelleField.setEnabled(false);
-            montantField.setEnabled(false);
-        });
-        
-        personnaliseBouton.addActionListener(e -> {
-            preconfigCombo.setEnabled(false);
-            codeField.setEnabled(true);
-            libelleField.setEnabled(true);
-            montantField.setEnabled(true);
-        });
-        
-        // État initial
-        preconfigCombo.setEnabled(true);
-        codeField.setEnabled(false);
-        libelleField.setEnabled(false);
-        montantField.setEnabled(false);
-        
+
+        formulaire.add(new JLabel("Code :"));
+        formulaire.add(codeField);
+        formulaire.add(new JLabel("Libellé :"));
+        formulaire.add(libelleField);
+        formulaire.add(new JLabel("Montant (FCFA) :"));
+        formulaire.add(montantField);
+
+        // Ajouter des tooltips pour aider l'utilisateur
+        codeField.setToolTipText("Code unique (lettres, chiffres, tirets et underscores, max 20 caractères)");
+        libelleField.setToolTipText("Nom du type d'abonnement (max 100 caractères)");
+        montantField.setToolTipText("Montant en FCFA (nombre entier)");
+
         int result = JOptionPane.showConfirmDialog(
-            this, 
-            formulaire, 
-            "Créer un nouveau type d'abonnement", 
+            this,
+            formulaire,
+            "Ajouter un nouveau type d'abonnement",
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );
-        
+
         if (result == JOptionPane.OK_OPTION) {
+            String code = codeField.getText().trim();
+            String libelle = libelleField.getText().trim();
+            String montantText = montantField.getText().trim();
+
+            // Validation des champs
+            if (code.isEmpty() || libelle.isEmpty() || montantText.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Tous les champs sont obligatoires!",
+                    "Champs manquants",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Validation du code
+            if (!CODE_PATTERN.matcher(code).matches()) {
+                JOptionPane.showMessageDialog(this,
+                    "Le code doit contenir uniquement des lettres, chiffres, tirets et underscores (max 20 caractères)!",
+                    "Code invalide",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Vérifier l'unicité du code
+            boolean codeExiste = typesAbonnement.stream()
+                .anyMatch(t -> t.getCode().equalsIgnoreCase(code));
+
+            if (codeExiste) {
+                JOptionPane.showMessageDialog(this,
+                    "Un type d'abonnement avec ce code existe déjà!",
+                    "Code en doublon",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Validation du libellé
+            if (libelle.length() > 100) {
+                JOptionPane.showMessageDialog(this,
+                    "Le libellé ne peut pas dépasser 100 caractères!",
+                    "Libellé trop long",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Validation et conversion du montant
             try {
-                String code;
-                String libelle;
-                int montant;
-                
-                if (preconfigureBouton.isSelected()) {
-                    // Utiliser la préconfiguration
-                    int configIndex = preconfigCombo.getSelectedIndex();
-                    Object[] config = PRECONFIGURATIONS[configIndex];
-                    code = (String) config[0];
-                    libelle = (String) config[1];
-                    montant = (Integer) config[2];
-                } else {
-                    // Utiliser les valeurs personnalisées
-                    code = codeField.getText().trim();
-                    libelle = libelleField.getText().trim();
-                    String montantText = montantField.getText().trim();
-                    
-                    if (code.isEmpty() || libelle.isEmpty() || montantText.isEmpty()) {
-                        JOptionPane.showMessageDialog(this, 
-                            "Tous les champs sont obligatoires!", 
-                            "Champs manquants", 
-                            JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-                    
-                    montant = Integer.parseInt(montantText);
-                }
-                
-                // Validations
-                if (!CODE_PATTERN.matcher(code).matches()) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Le code doit contenir uniquement des lettres, chiffres, tirets et underscores (max 20 caractères)!", 
-                        "Code invalide", 
+                int montant = Integer.parseInt(montantText);
+
+                if (montant <= 0) {
+                    JOptionPane.showMessageDialog(this,
+                        "Le montant doit être supérieur à 0!",
+                        "Montant invalide",
                         JOptionPane.WARNING_MESSAGE);
                     return;
                 }
-                
-                if (libelle.length() > 100) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Le libellé ne peut pas dépasser 100 caractères!", 
-                        "Libellé trop long", 
-                        JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                if (montant < 0) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Le montant ne peut pas être négatif!", 
-                        "Montant invalide", 
-                        JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                if (montant > 9999) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Le montant ne peut pas dépasser 9999€!", 
-                        "Montant trop élevé", 
-                        JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                // Vérifier l'unicité du code
-                boolean codeExiste = typesAbonnement.stream()
-                    .anyMatch(t -> t.getCode().equalsIgnoreCase(code));
-                
-                if (codeExiste) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Un type d'abonnement avec ce code existe déjà!", 
-                        "Code en doublon", 
-                        JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                TypeAbonnement nouveauType = new TypeAbonnement(code, libelle, montant);
+
+                // Créer le nouveau type d'abonnement
+                TypeAbonnement nouveauType = new TypeAbonnement();
+                nouveauType.setCode(code.toUpperCase()); // Uniformiser en majuscules
+                nouveauType.setLibelle(libelle);
+                nouveauType.setMontant(montant);
+
+                // Ajouter en base de données
                 typeAbonnementService.ajouter(nouveauType);
-                
-                JOptionPane.showMessageDialog(this, 
-                    "Type d'abonnement créé avec succès!\n" +
-                    "Code: " + code + "\n" +
-                    "Libellé: " + libelle + "\n" +
-                    "Montant: " + montant + "€\n" +
-                    "Catégorie: " + determinerCategorie(nouveauType), 
-                    "Création réussie", 
+
+                JOptionPane.showMessageDialog(this,
+                    "Type d'abonnement ajouté avec succès!",
+                    "Ajout réussi",
                     JOptionPane.INFORMATION_MESSAGE);
-                
+
                 // Recharger les données
                 loadData();
-                
+
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, 
-                    "Veuillez saisir un montant valide!", 
-                    "Format invalide", 
+                JOptionPane.showMessageDialog(this,
+                    "Veuillez saisir un montant valide (nombre entier)!",
+                    "Format invalide",
                     JOptionPane.ERROR_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, 
-                    "Erreur lors de la création: " + e.getMessage(), 
-                    "Erreur", 
+                JOptionPane.showMessageDialog(this,
+                    "Erreur lors de l'ajout: " + e.getMessage(),
+                    "Erreur",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -349,23 +237,25 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
     @Override
     public void modifier() {
         if (typeAbonnementSelectionne != null) {
-            // Pré-remplir le formulaire avec les données existantes
             JPanel formulaire = new JPanel(new GridLayout(3, 2, 10, 10));
             JTextField codeField = new JTextField(typeAbonnementSelectionne.getCode());
             JTextField libelleField = new JTextField(typeAbonnementSelectionne.getLibelle());
             JTextField montantField = new JTextField(String.valueOf(typeAbonnementSelectionne.getMontant()));
-            
-            // Le code ne doit pas être modifiable (clé primaire)
+
             codeField.setEditable(false);
             codeField.setBackground(Color.LIGHT_GRAY);
-            
+
             formulaire.add(new JLabel("Code (non modifiable) :"));
             formulaire.add(codeField);
             formulaire.add(new JLabel("Libellé :"));
             formulaire.add(libelleField);
-            formulaire.add(new JLabel("Montant (€) :"));
+            formulaire.add(new JLabel("Montant (FCFA) :"));
             formulaire.add(montantField);
-            
+
+            // Ajouter des tooltips
+            libelleField.setToolTipText("Nom du type d'abonnement (max 100 caractères)");
+            montantField.setToolTipText("Montant en FCFA (nombre entier positif)");
+
             int result = JOptionPane.showConfirmDialog(
                 this, 
                 formulaire, 
@@ -373,70 +263,63 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
                 JOptionPane.OK_CANCEL_OPTION,
                 JOptionPane.PLAIN_MESSAGE
             );
-            
+
             if (result == JOptionPane.OK_OPTION) {
                 String libelle = libelleField.getText().trim();
                 String montantText = montantField.getText().trim();
-                
-                if (!libelle.isEmpty() && !montantText.isEmpty()) {
-                    try {
-                        int montant = Integer.parseInt(montantText);
-                        
-                        // Validations
-                        if (libelle.length() > 100) {
-                            JOptionPane.showMessageDialog(this, 
-                                "Le libellé ne peut pas dépasser 100 caractères!", 
-                                "Libellé trop long", 
-                                JOptionPane.WARNING_MESSAGE);
-                            return;
-                        }
-                        
-                        if (montant < 0) {
-                            JOptionPane.showMessageDialog(this, 
-                                "Le montant ne peut pas être négatif!", 
-                                "Montant invalide", 
-                                JOptionPane.WARNING_MESSAGE);
-                            return;
-                        }
-                        
-                        if (montant > 9999) {
-                            JOptionPane.showMessageDialog(this, 
-                                "Le montant ne peut pas dépasser 9999€!", 
-                                "Montant trop élevé", 
-                                JOptionPane.WARNING_MESSAGE);
-                            return;
-                        }
-                        
-                        // Mettre à jour les données du type sélectionné
-                        typeAbonnementSelectionne.setLibelle(libelle);
-                        typeAbonnementSelectionne.setMontant(montant);
-                        
-                        typeAbonnementService.modifier(typeAbonnementSelectionne);
-                        
-                        JOptionPane.showMessageDialog(this, 
-                            "Type d'abonnement modifié avec succès!", 
-                            "Modification réussie", 
-                            JOptionPane.INFORMATION_MESSAGE);
-                        
-                        // Recharger les données
-                        loadData();
-                        
-                    } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(this, 
-                            "Veuillez saisir un montant valide!", 
-                            "Format invalide", 
-                            JOptionPane.ERROR_MESSAGE);
-                    } catch (Exception e) {
-                        JOptionPane.showMessageDialog(this, 
-                            "Erreur lors de la modification: " + e.getMessage(), 
-                            "Erreur", 
-                            JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "Le libellé et le montant sont obligatoires!", 
-                        "Champs manquants", 
+
+                // Validation des champs
+                if (libelle.isEmpty() || montantText.isEmpty()) {
+                    JOptionPane.showMessageDialog(this,
+                        "Le libellé and le montant sont obligatoires!",
+                        "Champs manquants",
                         JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Validation du libellé
+                if (libelle.length() > 100) {
+                    JOptionPane.showMessageDialog(this,
+                        "Le libellé ne peut pas dépasser 100 caractères!",
+                        "Libellé trop long",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                try {
+                    int montant = Integer.parseInt(montantText);
+
+                    if (montant <= 0) {
+                        JOptionPane.showMessageDialog(this,
+                            "Le montant doit être supérieur à 0!",
+                            "Montant invalide",
+                            JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+
+                    // Mettre à jour les données
+                    typeAbonnementSelectionne.setLibelle(libelle);
+                    typeAbonnementSelectionne.setMontant(montant);
+                    typeAbonnementService.modifier(typeAbonnementSelectionne);
+
+                    JOptionPane.showMessageDialog(this,
+                        "Type d'abonnement modifié avec succès!",
+                        "Modification réussie",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                    // Recharger les données
+                    loadData();
+
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(this,
+                        "Veuillez saisir un montant valide (nombre entier)!",
+                        "Format invalide",
+                        JOptionPane.ERROR_MESSAGE);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this,
+                        "Erreur lors de la modification: " + e.getMessage(),
+                        "Erreur",
+                        JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -448,16 +331,14 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
             StringBuilder infoType = new StringBuilder();
             infoType.append("Type d'abonnement: ").append(typeAbonnementSelectionne.getCode());
             infoType.append("\nLibellé: ").append(typeAbonnementSelectionne.getLibelle());
-            infoType.append("\nMontant: ").append(typeAbonnementSelectionne.getMontant()).append("€");
+            infoType.append("\nMontant: ").append(typeAbonnementSelectionne.getMontant()).append(" FCFA");
             infoType.append("\nCatégorie: ").append(determinerCategorie(typeAbonnementSelectionne));
-            
-            int confirmation = JOptionPane.showConfirmDialog(this, 
+            int confirmation = JOptionPane.showConfirmDialog(this,
                 "Êtes-vous sûr de vouloir supprimer le type d'abonnement :\n" + infoType.toString() + 
                 "\n\nATTENTION: Cette action supprimera également tous les abonnements de ce type!", 
                 "Confirmation de suppression", 
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
-            
             if (confirmation == JOptionPane.YES_OPTION) {
                 try {
                     typeAbonnementService.supprimer(typeAbonnementSelectionne);
@@ -465,11 +346,8 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
                         "Type d'abonnement supprimé avec succès!", 
                         "Suppression réussie", 
                         JOptionPane.INFORMATION_MESSAGE);
-                    
-                    // Recharger les données
                     loadData();
                     typeAbonnementSelectionne = null;
-                    
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, 
                         "Erreur lors de la suppression: " + e.getMessage() + 
@@ -495,29 +373,25 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
      */
     public void creerTypesPredefinis() {
         int confirmation = JOptionPane.showConfirmDialog(this, 
-            "Créer tous les types d'abonnement prédéfinis ?\n" +
-            "Cette action ajoutera 8 types standards si ils n'existent pas encore.", 
-            "Création en lot", 
+            "Créer les 3 types d'abonnement prédéfinis ?\n" +
+            "Cette action ajoutera Basic, Standard et Prenium si ils n'existent pas encore.",
+            "Création en lot",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.QUESTION_MESSAGE);
-        
         if (confirmation == JOptionPane.YES_OPTION) {
             StringBuilder resultats = new StringBuilder();
             int ajouts = 0;
             int ignores = 0;
-            
             for (Object[] config : PRECONFIGURATIONS) {
                 String code = (String) config[0];
                 String libelle = (String) config[1];
                 int montant = (Integer) config[2];
-                
-                // Vérifier si le code existe déjà
                 boolean codeExiste = typesAbonnement.stream()
                     .anyMatch(t -> t.getCode().equalsIgnoreCase(code));
-                
                 if (!codeExiste) {
                     try {
                         TypeAbonnement nouveau = new TypeAbonnement(code, libelle, montant);
+                        // La monnaie est toujours FCFA, il n'y a pas de setMonnaie
                         typeAbonnementService.ajouter(nouveau);
                         ajouts++;
                     } catch (Exception e) {
@@ -528,22 +402,16 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
                     ignores++;
                 }
             }
-            
-            // Recharger les données
             loadData();
-            
-            // Afficher le résumé
             StringBuilder message = new StringBuilder();
-            message.append("=== CRÉATION EN LOT ===\n\n");
+            message.append("=== CR��ATION EN LOT ===\n\n");
             message.append("Types créés: ").append(ajouts).append("\n");
             message.append("Types ignorés (déjà existants): ").append(ignores).append("\n");
             message.append("Total traité: ").append(PRECONFIGURATIONS.length).append("\n");
-            
             if (resultats.length() > 0) {
                 message.append("\nErreurs:\n").append(resultats);
             }
-            
-            JOptionPane.showMessageDialog(this, 
+            JOptionPane.showMessageDialog(this,
                 message.toString(), 
                 "Résultats de la création", 
                 JOptionPane.INFORMATION_MESSAGE);
@@ -694,13 +562,11 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
                 JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
         StringBuilder grille = new StringBuilder();
         grille.append("=== GRILLE TARIFAIRE ===\n\n");
         grille.append(String.format("%-20s %-30s %-10s %-15s\n", 
             "CODE", "LIBELLÉ", "PRIX", "CATÉGORIE"));
         grille.append("-".repeat(80)).append("\n");
-        
         typesAbonnement.stream()
             .sorted(java.util.Comparator.comparing(TypeAbonnement::getMontant))
             .forEach(type -> {
@@ -708,27 +574,22 @@ public class TypeAbonnementPanel extends JPanel implements CrudOperationsInterfa
                     type.getCode(),
                     type.getLibelle().length() > 30 ? 
                         type.getLibelle().substring(0, 27) + "..." : type.getLibelle(),
-                    type.getMontant() + "€",
+                    type.getMontant() + " FCFA",
                     determinerCategorie(type)
                 ));
             });
-        
         grille.append("\n=== RECOMMANDATIONS ===\n");
-        grille.append("• Économique: ≤ 20€\n");
-        grille.append("• Standard: 21-50€\n");
-        grille.append("• Premium: 51-100€\n");
-        grille.append("• Luxury: > 100€\n");
-        
+        grille.append("• Basic: 5000 FCFA\n");
+        grille.append("• Standard: 15000 FCFA\n");
+        grille.append("• Premium: 25000 FCFA\n");
         JTextArea textArea = new JTextArea(grille.toString());
         textArea.setEditable(false);
-        textArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
-        
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(600, 350));
-        
-        JOptionPane.showMessageDialog(this, 
+        JOptionPane.showMessageDialog(this,
             scrollPane, 
             "Grille tarifaire", 
             JOptionPane.INFORMATION_MESSAGE);
     }
 }
+

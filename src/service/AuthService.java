@@ -1,7 +1,11 @@
 package service;
 
 import dao.ClientDao;
+import dao.DemandeInscriptionDao;
+import dao.MembreDao;
 import entite.Client;
+import entite.DemandeInscription;
+import entite.Membre;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -11,9 +15,13 @@ public class AuthService {
 
     private static AuthService instance;
     private ClientDao clientDao;
+    private DemandeInscriptionDao demandeInscriptionDao;
+    private MembreDao membreDao;
 
     private AuthService() {
         clientDao = new ClientDao();
+        demandeInscriptionDao = new DemandeInscriptionDao();
+        membreDao = new MembreDao();
     }
 
     public static AuthService getInstance() {
@@ -25,6 +33,7 @@ public class AuthService {
 
     /**
      * Authentifie un client avec email et mot de passe
+     * Vérifie maintenant que le client est aussi membre approuvé
      */
     public LoginResult authenticate(String email, String password) {
         try {
@@ -37,6 +46,12 @@ public class AuthService {
 
             if (!password.equals(client.getMotDePasse())) {
                 return new LoginResult(false, "WRONG_PASSWORD", null);
+            }
+
+            // Vérifier si le client est membre (demande approuvée)
+            Membre membre = membreDao.trouverPar("client.id", client.getId());
+            if (membre == null) {
+                return new LoginResult(false, "NOT_APPROVED_MEMBER", null);
             }
 
             return new LoginResult(true, "SUCCESS", client);
@@ -74,7 +89,8 @@ public class AuthService {
     }
 
     /**
-     * Inscrit un nouveau client
+     * Inscrit un nouveau client et crée automatiquement une demande d'inscription
+     * Le client ne pourra se connecter qu'après approbation de l'administrateur
      */
     public LoginResult register(String nom, String prenom, String email, String password, Date dateNaissance) {
         try {
@@ -95,7 +111,16 @@ public class AuthService {
             // Sauvegarder avec JPA
             Client savedClient = clientDao.saveWithJPA(newClient);
 
-            return new LoginResult(true, "SUCCESS", savedClient);
+            // Créer automatiquement une demande d'inscription
+            DemandeInscription demandeInscription = new DemandeInscription();
+            demandeInscription.setClient(savedClient);
+            demandeInscription.setDateDeDemande(LocalDateTime.now());
+            // dateDeTraitement reste null (en attente)
+
+            // Sauvegarder la demande d'inscription
+            demandeInscriptionDao.ajouter(demandeInscription);
+
+            return new LoginResult(true, "REGISTRATION_PENDING_APPROVAL", savedClient);
 
         } catch (RuntimeException e) {
             System.err.println("Erreur d'inscription: " + e.getMessage());

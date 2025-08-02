@@ -124,7 +124,7 @@ public class PaiementPanel extends JPanel implements CrudOperationsInterface {
         
         formulaire.add(new JLabel("Date de paiement (dd/MM/yyyy HH:mm) :"));
         formulaire.add(dateField);
-        formulaire.add(new JLabel("Montant (€) :"));
+        formulaire.add(new JLabel("Montant (FCFA) :"));
         formulaire.add(montantField);
         formulaire.add(new JLabel("Moyen de paiement :"));
         formulaire.add(moyenCombo);
@@ -220,7 +220,7 @@ public class PaiementPanel extends JPanel implements CrudOperationsInterface {
         
             formulaire.add(new JLabel("Date de paiement (dd/MM/yyyy HH:mm) :"));
             formulaire.add(dateField);
-            formulaire.add(new JLabel("Montant (€) :"));
+            formulaire.add(new JLabel("Montant (FCFA) :"));
             formulaire.add(montantField);
             formulaire.add(new JLabel("Moyen de paiement :"));
             formulaire.add(moyenCombo);

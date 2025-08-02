@@ -25,23 +25,22 @@ public class Membre extends GenericEntity{
     private LocalDateTime dateInscription;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_client")
     private Client client;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_seance")
-    private Seance seance;
+    @OneToMany(mappedBy = "membre", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Abonnement> abonnement;
 
     public Membre(){
-        
     }
 
-    public Membre(Integer id, LocalDateTime dateInscription, Client client) {
+    public Membre(Integer id, LocalDateTime dateInscription, Client client, Abonnement abonnement) {
         this.id = id;
         this.dateInscription = dateInscription;
         this.client = client;
     }
 
-    public Membre(LocalDateTime dateInscription, Client client) {
+    public Membre(LocalDateTime dateInscription, Client client, Abonnement abonnement) {
         this.dateInscription = dateInscription;
         this.client = client;
     }
@@ -72,12 +71,12 @@ public class Membre extends GenericEntity{
         this.client = client;
     }
 
-    public Seance getSeance() {
-        return seance;
+    public List<Abonnement> getAbonnement() {
+        return abonnement;
     }
 
-    public void setSeance(Seance seance) {
-        this.seance = seance;
+    public void setAbonnement(List<Abonnement> abonnement) {
+        this.abonnement = abonnement;
     }
 
     @Override

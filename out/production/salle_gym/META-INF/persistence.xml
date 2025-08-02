@@ -11,7 +11,16 @@
         <class>entite.TypeAbonnement</class>
         <class>entite.Salle</class>
         <class>entite.Equipement</class>
-
+        <class>entite.Notification</class>
+        <class>entite.Membre</class>
+        <class>entite.Client</class>
+        <class>entite.Abonnement</class>
+        <class>entite.DemandeInscription</class>
+        <class>entite.Paiement</class>
+        <class>entite.MoyenDePaiement</class>
+        <class>entite.Horaire</class>
+        <class>entite.Seance</class>
+        <class>entite.Ticket</class>
 
         <!-- Configuration des propriétés Hibernate -->
         <properties>
@@ -20,11 +29,14 @@
             <property name="hibernate.connection.url" value="jdbc:postgresql://localhost:5432/gym"/>
             <property name="hibernate.connection.username" value="postgres"/>
             <property name="hibernate.connection.password" value="Jefto"/>
-            <property name="javax.persistence.schema-generation.database.action" value="create"/>
+
+            <!-- Configuration pour la création/mise à jour automatique des tables -->
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+
             <!-- Dialecte pour PostgreSQL -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
-            <property name="hibernate.hbm2ddl.auto" value="update"/>
         </properties>
     </persistence-unit>
 

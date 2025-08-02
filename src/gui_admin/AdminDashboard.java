@@ -5,6 +5,8 @@ import gui_admin.panel.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.net.URL;
 
 public class AdminDashboard extends JFrame {
@@ -12,21 +14,23 @@ public class AdminDashboard extends JFrame {
     Font font = new Font("Arial", Font.BOLD, 14);
     Dimension taille = new Dimension(100, 20);
     private JPanel mainContent; // zone centrale dynamique
-    private JComboBox<String> comboPages; // menu déroulant
+    private JPanel sidebar; // Sidebar pour les menus
+    private JButton menuButton; // Bouton burger menu
+    private boolean sidebarVisible = false;
     private JPanel profilPart;
     private NavigationController navigationController; // Contrôleur de navigation
 
     public AdminDashboard() {
-        super("Tableau de bord Admin");
+        super("FITPlus+ - Tableau de bord Admin");
 
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.setSize(1000, 600);
+        this.setSize(1200, 700);
         this.setLocationRelativeTo(null);
         this.setLayout(new BorderLayout());
 
         // --- Barre supérieure (NORTH) ---
         JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(new Color(74, 41, 0)); // Jaune clair
+        topBar.setBackground(new Color(74, 41, 0));
 
         // --- Inférieur (SOUTH) ---
         JPanel bottomBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
@@ -48,23 +52,31 @@ public class AdminDashboard extends JFrame {
         bottomBar.add(modifierBtn);
         bottomBar.add(supprimerBtn);
 
-        // Logo à gauche
+        // Section gauche avec logo et menu burger
+        JPanel leftSection = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        leftSection.setBackground(new Color(74, 41, 0));
+
+        // Menu burger button
+        menuButton = createMenuButton();
+        leftSection.add(menuButton);
+
+        // Logo
         JLabel logo = new JLabel("FITPlus+");
         Font logoFont = new Font("SansSerif", Font.BOLD, 22);
         logo.setFont(logoFont);
         logo.setForeground(new Color(255, 254, 242));
-        logo.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        topBar.add(logo, BorderLayout.WEST);
+        leftSection.add(logo);
 
-        // Profil
+        topBar.add(leftSection, BorderLayout.WEST);
+
+        // Profil à droite
         profilPart = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         profilPart.setBackground(new Color(74, 41, 0));
         JButton deconnexionBtn = new JButton();
-        configurerBouton(deconnexionBtn, "Deconnexion", new Color(255, 0, 0), Color.WHITE, font, taille);
+        configurerBouton(deconnexionBtn, "Déconnexion", new Color(220, 53, 69), Color.WHITE, font, taille);
 
         // Ajouter l'action de déconnexion
         deconnexionBtn.addActionListener(e -> {
-            // Demander confirmation
             int confirm = JOptionPane.showConfirmDialog(
                 this,
                 "Êtes-vous sûr de vouloir vous déconnecter ?",
@@ -73,64 +85,23 @@ public class AdminDashboard extends JFrame {
             );
 
             if (confirm == JOptionPane.YES_OPTION) {
-                // Fermer la fenêtre actuelle
                 this.dispose();
-
-                // Afficher le sélecteur d'interface
                 salle_gym.Main.showInterfaceSelector();
             }
         });
 
-        // Charger l'image de notification
-        JLabel notificationIcon = new JLabel();
-        try {
-            URL notificationUrl = getClass().getClassLoader().getResource("assets/notification.png");
-            if (notificationUrl != null) {
-                ImageIcon originalIcon = new ImageIcon(notificationUrl);
-                // Redimensionner l'icône pour qu'elle s'adapte bien à la barre
-                Image img = originalIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
-                ImageIcon scaledIcon = new ImageIcon(img);
-                notificationIcon.setIcon(scaledIcon);
-                notificationIcon.setToolTipText("Notifications");
-                notificationIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-                // Ajouter un listener pour les clics sur l'icône de notification
-                notificationIcon.addMouseListener(new java.awt.event.MouseAdapter() {
-                    @Override
-                    public void mouseClicked(java.awt.event.MouseEvent e) {
-                        // Naviguer vers la page des notifications
-                        navigationController.navigateToPage("Notifications");
-                        // Synchroniser le ComboBox
-                        comboPages.setSelectedItem("Notifications");
-                    }
-                });
-            } else {
-                // Si l'image n'est pas trouvée, afficher un texte de fallback
-                notificationIcon.setText("🔔");
-                notificationIcon.setForeground(new Color(255, 254, 242));
-                notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
-            }
-        } catch (Exception e) {
-            // En cas d'erreur, utiliser un emoji comme fallback
-            notificationIcon.setText("🔔");
-            notificationIcon.setForeground(new Color(255, 254, 242));
-            notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
-        }
-
-        // Menu déroulant à droite
-        comboPages = new JComboBox<>(new String[]{
-                "Accueil", "Abonnements", "Clients", "Demande Inscription",
-                "Equipments", "Horaire", "Membres", "Moyen de Paiement",
-                "Notifications", "Paiements", "Salles", "Seance", "Tickets", "Types Abonnements",
-        });
-        StyleUtil.styliserComboBox(comboPages);
+        // Charger l'icône de notification
+        JLabel notificationIcon = createNotificationIcon();
 
         profilPart.add(deconnexionBtn);
         profilPart.add(notificationIcon);
-        profilPart.add(comboPages);
         topBar.add(profilPart, BorderLayout.EAST);
+
         this.add(bottomBar, BorderLayout.SOUTH);
         this.add(topBar, BorderLayout.NORTH);
+
+        // --- Sidebar ---
+        createSidebar();
 
         // --- Zone principale (CENTER) ---
         mainContent = new JPanel();
@@ -142,12 +113,190 @@ public class AdminDashboard extends JFrame {
 
         // Par défaut : Accueil
         navigationController.navigateToPage("Accueil");
+    }
 
-        // --- Changement de panel au choix dans le ComboBox
-        comboPages.addActionListener(e -> {
-            String selection = (String) comboPages.getSelectedItem();
-            navigationController.navigateToPage(selection);
+    private JButton createMenuButton() {
+        JButton button = new JButton();
+        button.setPreferredSize(new Dimension(40, 30));
+        button.setBackground(new Color(74, 41, 0));
+        button.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Créer l'icône burger menu
+        button.setIcon(createBurgerIcon());
+
+        button.addActionListener(e -> toggleSidebar());
+
+        return button;
+    }
+
+    private Icon createBurgerIcon() {
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.setStroke(new BasicStroke(2));
+
+                // Trois lignes horizontales
+                g2.drawLine(x + 3, y + 5, x + 21, y + 5);
+                g2.drawLine(x + 3, y + 12, x + 21, y + 12);
+                g2.drawLine(x + 3, y + 19, x + 21, y + 19);
+
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() { return 24; }
+
+            @Override
+            public int getIconHeight() { return 24; }
+        };
+    }
+
+    private void createSidebar() {
+        sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBackground(new Color(248, 249, 250));
+        sidebar.setPreferredSize(new Dimension(250, 0));
+        sidebar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(222, 226, 230)),
+            BorderFactory.createEmptyBorder(20, 0, 20, 0)
+        ));
+
+        // Créer un panel scrollable pour le contenu de la sidebar
+        JPanel sidebarContent = new JPanel();
+        sidebarContent.setLayout(new BoxLayout(sidebarContent, BoxLayout.Y_AXIS));
+        sidebarContent.setBackground(new Color(248, 249, 250));
+
+        // Titre de la sidebar
+        JLabel sidebarTitle = new JLabel("Navigation");
+        sidebarTitle.setFont(new Font("Arial", Font.BOLD, 16));
+        sidebarTitle.setForeground(new Color(73, 80, 87));
+        sidebarTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        sidebarTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        sidebarContent.add(sidebarTitle);
+
+        // Bouton Hide
+        JButton hideButton = createSidebarButton("x Masquer", new Color(220, 53, 69));
+        hideButton.addActionListener(e -> toggleSidebar());
+        sidebarContent.add(hideButton);
+        sidebarContent.add(Box.createVerticalStrut(10));
+
+        // Boutons de navigation - Ajout du menu "Message"
+        String[] menuItems = {
+            "Accueil", "Abonnements", "Clients", "Demande Inscription",
+            "Equipments", "Horaire", "Membres", "Message", "Moyen de Paiement",
+            "Notifications", "Paiements", "Salles", "Seance",
+            "Tickets", "Types Abonnements"
+        };
+
+        for (String item : menuItems) {
+            JButton menuBtn = createSidebarButton(item, new Color(74, 41, 0));
+            menuBtn.addActionListener(e -> {
+                // Gérer le cas spécial du menu "Message" qui doit ouvrir les Notifications
+                String targetPage = item.equals("Message") ? "Notifications" : item;
+                navigationController.navigateToPage(targetPage);
+                toggleSidebar(); // Fermer la sidebar après sélection
+            });
+            sidebarContent.add(menuBtn);
+            sidebarContent.add(Box.createVerticalStrut(5));
+        }
+
+        // Ajouter un espace flexible à la fin pour pousser le contenu vers le haut
+        sidebarContent.add(Box.createVerticalGlue());
+
+        // Créer un JScrollPane pour rendre la sidebar scrollable
+        JScrollPane sidebarScrollPane = new JScrollPane(sidebarContent);
+        sidebarScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        sidebarScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sidebarScrollPane.setBorder(null);
+        sidebarScrollPane.setBackground(new Color(248, 249, 250));
+        sidebarScrollPane.getViewport().setBackground(new Color(248, 249, 250));
+
+        // Personnaliser la scrollbar
+        sidebarScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        sidebarScrollPane.getVerticalScrollBar().setBlockIncrement(48);
+
+        sidebar.add(sidebarScrollPane);
+        sidebar.setVisible(false);
+    }
+
+    private JButton createSidebarButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.PLAIN, 14));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setMaximumSize(new Dimension(220, 35));
+        button.setPreferredSize(new Dimension(220, 35));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Effet hover
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            Color originalColor = button.getBackground();
+
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                button.setBackground(originalColor.darker());
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                button.setBackground(originalColor);
+            }
         });
+
+        return button;
+    }
+
+    private void toggleSidebar() {
+        sidebarVisible = !sidebarVisible;
+        sidebar.setVisible(sidebarVisible);
+
+        if (sidebarVisible) {
+            this.add(sidebar, BorderLayout.WEST);
+        } else {
+            this.remove(sidebar);
+        }
+
+        this.revalidate();
+        this.repaint();
+    }
+
+    private JLabel createNotificationIcon() {
+        JLabel notificationIcon = new JLabel();
+        try {
+            URL notificationUrl = getClass().getClassLoader().getResource("assets/notification.png");
+            if (notificationUrl != null) {
+                ImageIcon originalIcon = new ImageIcon(notificationUrl);
+                Image img = originalIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+                ImageIcon scaledIcon = new ImageIcon(img);
+                notificationIcon.setIcon(scaledIcon);
+                notificationIcon.setToolTipText("Notifications");
+                notificationIcon.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+                notificationIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        navigationController.navigateToPage("Notifications");
+                    }
+                });
+            } else {
+                notificationIcon.setText("🔔");
+                notificationIcon.setForeground(new Color(255, 254, 242));
+                notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
+            }
+        } catch (Exception e) {
+            notificationIcon.setText("🔔");
+            notificationIcon.setForeground(new Color(255, 254, 242));
+            notificationIcon.setFont(new Font("Arial", Font.PLAIN, 20));
+        }
+        return notificationIcon;
     }
 
     /**
@@ -234,8 +383,6 @@ public class AdminDashboard extends JFrame {
      */
     public void navigateToPage(String pageName) {
         navigationController.navigateToPage(pageName);
-        // Synchroniser le ComboBox avec la navigation
-        comboPages.setSelectedItem(pageName);
     }
 
     /**

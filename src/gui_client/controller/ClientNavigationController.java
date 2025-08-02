@@ -32,7 +32,6 @@ public class ClientNavigationController {
         panelFactory = new HashMap<>();
 
         panelFactory.put("Accueil", AccueilClientPanel::new);
-        panelFactory.put("Séances", SeancesPanel::new);
         panelFactory.put("Abonnements", AbonnementClientPanel::new);
         panelFactory.put("Profil", ProfilPanel::new);
         panelFactory.put("Notifications", NotificationsPanel::new);
@@ -71,9 +70,6 @@ public class ClientNavigationController {
                 AccueilClientPanel accueilPanel = new AccueilClientPanel();
                 accueilPanel.setNavigationController(this);
                 newPanel = accueilPanel;
-                break;
-            case "Séances":
-                newPanel = new SeancesPanel();
                 break;
             case "Abonnements":
                 newPanel = new AbonnementClientPanel();

@@ -9,9 +9,11 @@ import service.TypeAbonnementService;
 import service.PaiementService;
 import service.MembreService;
 import gui_util.StyleUtil;
+import gui_client.util.AbonnementSouscription;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
@@ -27,6 +29,7 @@ public class AbonnementPanel extends JPanel implements CrudOperationsInterface {
     private TypeAbonnementService typeAbonnementService;
     private PaiementService paiementService;
     private MembreService membreService;
+    private AbonnementSouscription abonnementUtil;
     private DefaultTableModel tableModel;
     private JTable table;
 
@@ -36,13 +39,14 @@ public class AbonnementPanel extends JPanel implements CrudOperationsInterface {
         this.typeAbonnementService = new TypeAbonnementService();
         this.paiementService = new PaiementService();
         this.membreService = new MembreService();
-        
+        this.abonnementUtil = AbonnementSouscription.getInstance();
+
         initializeTable();
         loadData();
     }
 
     private void initializeTable() {
-        String[] colonnes = {"Sélection", "ID", "Date début", "Date fin", "Type", "Membre", "Paiement"};
+        String[] colonnes = {"Sélection", "ID", "Date début", "Date fin", "Type", "Membre", "Paiement", "Statut"};
 
         tableModel = new DefaultTableModel(colonnes, 0) {
             @Override
@@ -56,9 +60,38 @@ public class AbonnementPanel extends JPanel implements CrudOperationsInterface {
 
         table = new JTable(tableModel);
         table.getColumnModel().getColumn(0).setPreferredWidth(70);
-        
+        table.getColumnModel().getColumn(7).setPreferredWidth(120); // Colonne Statut
+
         // Styliser l'en-tête
         StyleUtil.styliserTableHeader(table);
+
+        // Renderer personnalisé pour la colonne Statut avec couleurs
+        table.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                if (!isSelected) {
+                    String statut = value.toString();
+                    if (statut.contains("Actif")) {
+                        if (statut.contains("expire bientôt")) {
+                            c.setForeground(new Color(255, 165, 0)); // Orange
+                        } else {
+                            c.setForeground(new Color(46, 204, 113)); // Vert
+                        }
+                    } else if (statut.equals("Expiré")) {
+                        c.setForeground(new Color(231, 76, 60)); // Rouge
+                    } else {
+                        c.setForeground(Color.GRAY);
+                    }
+                } else {
+                    c.setForeground(Color.WHITE);
+                }
+
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        });
 
         // Ajouter le listener pour les cases à cocher
         tableModel.addTableModelListener(new TableModelListener() {
@@ -97,6 +130,9 @@ public class AbonnementPanel extends JPanel implements CrudOperationsInterface {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         
         for (Abonnement abonnement : abonnements) {
+            // Déterminer le statut de l'abonnement
+            String statut = determinerStatutAbonnement(abonnement);
+
             tableModel.addRow(new Object[]{
                 false,
                 abonnement.getId(),
@@ -104,8 +140,35 @@ public class AbonnementPanel extends JPanel implements CrudOperationsInterface {
                 abonnement.getDateFin() != null ? abonnement.getDateFin().format(formatter) : "Non définie",
                 abonnement.getTypeAbonnement() != null ? abonnement.getTypeAbonnement().getLibelle() : "Aucun",
                 abonnement.getMembre() != null ? "Membre #" + abonnement.getMembre().getId() : "Aucun",
-                abonnement.getPaiement() != null ? "Paiement #" + abonnement.getPaiement().getId() : "Aucun"
+                abonnement.getPaiement() != null ? "Paiement #" + abonnement.getPaiement().getId() : "Aucun",
+                statut
             });
+        }
+    }
+
+    /**
+     * Détermine le statut d'un abonnement en utilisant la classe utilitaire
+     * @param abonnement L'abonnement à analyser
+     * @return Le statut formaté
+     */
+    private String determinerStatutAbonnement(Abonnement abonnement) {
+        if (abonnement == null || abonnement.getDateFin() == null) {
+            return "Indéterminé";
+        }
+
+        try {
+            if (abonnementUtil.isAbonnementActif(abonnement)) {
+                long joursRestants = abonnementUtil.getJoursRestants(abonnement);
+                if (joursRestants <= 7) {
+                    return "Actif (expire bientôt)";
+                } else {
+                    return "Actif (" + joursRestants + " jours)";
+                }
+            } else {
+                return "Expiré";
+            }
+        } catch (Exception e) {
+            return "Erreur";
         }
     }
 

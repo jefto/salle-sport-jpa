@@ -3,6 +3,7 @@ package gui_admin.panel;
 import entite.Seance;
 import entite.Salle;
 import entite.Membre;
+import entite.Client;
 import service.SeanceService;
 import service.SalleService;
 import service.MembreService;
@@ -56,10 +57,8 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
         table.getColumnModel().getColumn(1).setPreferredWidth(50);
         table.getColumnModel().getColumn(4).setPreferredWidth(80);
         
-        // Styliser l'en-tête
         StyleUtil.styliserTableHeader(table);
 
-        // Ajouter le listener pour les cases à cocher
         tableModel.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
@@ -68,7 +67,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     boolean isChecked = (Boolean) tableModel.getValueAt(row, 0);
                     
                     if (isChecked) {
-                        // Décocher les autres cases
                         for (int i = 0; i < tableModel.getRowCount(); i++) {
                             if (i != row) {
                                 tableModel.setValueAt(false, i, 0);
@@ -87,11 +85,9 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
     }
 
     private void loadData() {
-        // Vider le modèle
         tableModel.setRowCount(0);
-        
+
         try {
-            // Charger les données
             seances = seanceService.listerTous();
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -102,7 +98,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                 String dateFin = seance.getDateFin() != null ?
                     seance.getDateFin().format(formatter) : "Non définie";
 
-                // Calculer la durée
                 String duree = "N/A";
                 if (seance.getDateDebut() != null && seance.getDateFin() != null) {
                     Duration duration = Duration.between(seance.getDateDebut(), seance.getDateFin());
@@ -111,27 +106,17 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     duree = String.format("%dh%02dm", heures, minutes);
                 }
 
-                // Informations salle
                 String salle = seance.getSalle() != null ?
                     seance.getSalle().getLibelle() : "Aucune salle";
 
-                // Calculer le nombre de membres inscrits de manière sécurisée
-                String membres;
-                try {
-                    // Utiliser la méthode générique pour compter les membres inscrits à cette séance
-                    dao.MembreDao membreDao = new dao.MembreDao();
-                    List<entite.Membre> membresInscrits = membreDao.listerPar("seance.id", seance.getId());
-                    membres = membresInscrits.size() + " membre(s)";
-                } catch (Exception e) {
-                    // En cas d'erreur, utiliser la méthode de l'entité ou afficher 0
-                    try {
-                        membres = (seance.getMembres() != null ? seance.getMembres().size() : 0) + " membre(s)";
-                    } catch (Exception ex) {
-                        membres = "0 membre(s)";
-                    }
+                // Affichage du membre unique
+                String membreStr = "Aucun";
+                if (seance.getMembre() != null && seance.getMembre().getClient() != null) {
+                    Client c = seance.getMembre().getClient();
+                    membreStr = (c.getPrenom() != null ? c.getPrenom() : "") + " " +
+                                (c.getNom() != null ? c.getNom() : "");
                 }
 
-                // Déterminer le statut
                 String statut = determinerStatut(seance);
 
                 tableModel.addRow(new Object[]{
@@ -141,7 +126,7 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     dateFin,
                     duree,
                     salle,
-                    membres,
+                    membreStr,
                     statut
                 });
             }
@@ -153,17 +138,12 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                 JOptionPane.ERROR_MESSAGE);
         }
     }
-    
-    /**
-     * Détermine le statut d'une séance
-     */
+
     private String determinerStatut(Seance seance) {
         if (seance.getDateDebut() == null || seance.getDateFin() == null) {
             return "Incomplète";
         }
-        
         LocalDateTime maintenant = LocalDateTime.now();
-        
         if (seance.getDateFin().isBefore(maintenant)) {
             return "Terminée";
         } else if (seance.getDateDebut().isAfter(maintenant)) {
@@ -175,8 +155,8 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
 
     @Override
     public void ajouter() {
-        // Récupérer la liste des salles (plus besoin de membres pour créer une séance)
         List<Salle> salles = salleService.listerTous();
+        List<Membre> membres = membreService.listerTous();
 
         if (salles.isEmpty()) {
             JOptionPane.showMessageDialog(this, 
@@ -185,20 +165,25 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                 JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
-        // Créer un formulaire de saisie simplifié (sans sélection de membre)
-        JPanel formulaire = new JPanel(new GridLayout(3, 2, 10, 10));
+        if (membres.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Aucun membre disponible. Veuillez d'abord créer un membre.",
+                "Erreur",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        JPanel formulaire = new JPanel(new GridLayout(4, 2, 10, 10));
         JTextField dateDebutField = new JTextField();
         JTextField dateFinField = new JTextField();
         JComboBox<Salle> salleCombo = new JComboBox<>(salles.toArray(new Salle[0]));
+        JComboBox<Membre> membreCombo = new JComboBox<>(membres.toArray(new Membre[0]));
 
-        // Pré-remplir avec des dates par défaut
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         LocalDateTime maintenant = LocalDateTime.now();
         dateDebutField.setText(maintenant.format(formatter));
         dateFinField.setText(maintenant.plusHours(1).format(formatter));
-        
-        // Personaliser l'affichage des salles
+
         salleCombo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, 
@@ -213,17 +198,33 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             }
         });
 
+        membreCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Membre) {
+                    Membre membre = (Membre) value;
+                    Client c = membre.getClient();
+                    setText((c != null ? c.getPrenom() + " " + c.getNom() : "ID " + membre.getId()));
+                }
+                return this;
+            }
+        });
+
         formulaire.add(new JLabel("Date début (dd/MM/yyyy HH:mm) :"));
         formulaire.add(dateDebutField);
         formulaire.add(new JLabel("Date fin (dd/MM/yyyy HH:mm) :"));
         formulaire.add(dateFinField);
         formulaire.add(new JLabel("Salle :"));
         formulaire.add(salleCombo);
+        formulaire.add(new JLabel("Membre :"));
+        formulaire.add(membreCombo);
 
         int result = JOptionPane.showConfirmDialog(
             this, 
             formulaire, 
-            "Programmer une nouvelle séance", 
+            "Créer une nouvelle séance",
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );
@@ -232,13 +233,13 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             String dateDebutText = dateDebutField.getText().trim();
             String dateFinText = dateFinField.getText().trim();
             Salle salleSelectionnee = (Salle) salleCombo.getSelectedItem();
+            Membre membreSelectionne = (Membre) membreCombo.getSelectedItem();
 
-            if (!dateDebutText.isEmpty() && !dateFinText.isEmpty() && salleSelectionnee != null) {
+            if (!dateDebutText.isEmpty() && !dateFinText.isEmpty() && salleSelectionnee != null && membreSelectionne != null) {
                 try {
                     LocalDateTime dateDebut = LocalDateTime.parse(dateDebutText, formatter);
                     LocalDateTime dateFin = LocalDateTime.parse(dateFinText, formatter);
-                    
-                    // Validation des dates
+
                     if (dateFin.isBefore(dateDebut) || dateFin.isEqual(dateDebut)) {
                         JOptionPane.showMessageDialog(this, 
                             "La date de fin doit être postérieure à la date de début!", 
@@ -246,8 +247,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    
-                    // Vérifier que la séance ne dure pas plus de 12 heures
                     Duration duree = Duration.between(dateDebut, dateFin);
                     if (duree.toHours() > 12) {
                         JOptionPane.showMessageDialog(this, 
@@ -256,8 +255,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    
-                    // Vérifier les conflits de salle
                     if (verifierConflitSalle(salleSelectionnee, dateDebut, dateFin, null)) {
                         JOptionPane.showMessageDialog(this, 
                             "Conflit détecté : cette salle est déjà occupée pendant cette période!", 
@@ -265,25 +262,24 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                             JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    
-                    // Créer la séance sans membre (les membres s'inscriront ensuite)
+
+                    // Créer la séance avec membre associé
                     Seance nouvelleSeance = new Seance(dateDebut, dateFin, salleSelectionnee);
+                    nouvelleSeance.setMembre(membreSelectionne);
                     seanceService.ajouter(nouvelleSeance);
-                    
-                    JOptionPane.showMessageDialog(this, 
-                        "Séance programmée avec succès!\nDurée: " + 
-                        String.format("%dh%02dm", duree.toHours(), duree.toMinutesPart()) +
-                        "\nLes membres pourront s'inscrire à cette séance depuis l'interface client.",
-                        "Programmation réussie",
+
+                    JOptionPane.showMessageDialog(this,
+                        "Séance créée avec succès!\nDurée: " +
+                        String.format("%dh%02dm", duree.toHours(), duree.toMinutesPart()),
+                        "Création réussie",
                         JOptionPane.INFORMATION_MESSAGE);
-                    
-                    // Recharger les données
+
                     loadData();
-                    
+
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, 
-                        "Erreur lors de la programmation: " + e.getMessage() + 
-                        "\nFormat de date attendu: dd/MM/yyyy HH:mm (ex: 15/01/2024 14:30)", 
+                        "Erreur lors de la création: " + e.getMessage() +
+                        "\nFormat de date attendu: dd/MM/yyyy HH:mm (ex: 15/01/2024 14:30)",
                         "Erreur", 
                         JOptionPane.ERROR_MESSAGE);
                 }
@@ -299,8 +295,8 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
     @Override
     public void modifier() {
         if (seanceSelectionnee != null) {
-            // Récupérer les listes (plus besoin de membres car ils s'inscrivent eux-mêmes)
             List<Salle> salles = salleService.listerTous();
+            List<Membre> membres = membreService.listerTous();
 
             if (salles.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
@@ -309,14 +305,20 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
-            // Pré-remplir le formulaire avec les données existantes
-            JPanel formulaire = new JPanel(new GridLayout(3, 2, 10, 10));
+            if (membres.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Aucun membre disponible pour la modification.",
+                    "Erreur",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            JPanel formulaire = new JPanel(new GridLayout(4, 2, 10, 10));
             JTextField dateDebutField = new JTextField();
             JTextField dateFinField = new JTextField();
             JComboBox<Salle> salleCombo = new JComboBox<>(salles.toArray(new Salle[0]));
+            JComboBox<Membre> membreCombo = new JComboBox<>(membres.toArray(new Membre[0]));
 
-            // Formatter et afficher les dates existantes
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             if (seanceSelectionnee.getDateDebut() != null) {
                 dateDebutField.setText(seanceSelectionnee.getDateDebut().format(formatter));
@@ -324,8 +326,7 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             if (seanceSelectionnee.getDateFin() != null) {
                 dateFinField.setText(seanceSelectionnee.getDateFin().format(formatter));
             }
-            
-            // Personaliser l'affichage des salles
+
             salleCombo.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, 
@@ -339,10 +340,26 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     return this;
                 }
             });
-            
-            // Sélectionner les valeurs actuelles
+
+            membreCombo.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                        boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (value instanceof Membre) {
+                        Membre membre = (Membre) value;
+                        Client c = membre.getClient();
+                        setText((c != null ? c.getPrenom() + " " + c.getNom() : "ID " + membre.getId()));
+                    }
+                    return this;
+                }
+            });
+
             if (seanceSelectionnee.getSalle() != null) {
                 salleCombo.setSelectedItem(seanceSelectionnee.getSalle());
+            }
+            if (seanceSelectionnee.getMembre() != null) {
+                membreCombo.setSelectedItem(seanceSelectionnee.getMembre());
             }
 
             formulaire.add(new JLabel("Date début (dd/MM/yyyy HH:mm) :"));
@@ -351,6 +368,8 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             formulaire.add(dateFinField);
             formulaire.add(new JLabel("Salle :"));
             formulaire.add(salleCombo);
+            formulaire.add(new JLabel("Membre :"));
+            formulaire.add(membreCombo);
 
             int result = JOptionPane.showConfirmDialog(
                 this, 
@@ -364,14 +383,14 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                 String dateDebutText = dateDebutField.getText().trim();
                 String dateFinText = dateFinField.getText().trim();
                 Salle salleSelectionnee = (Salle) salleCombo.getSelectedItem();
+                Membre membreSelectionne = (Membre) membreCombo.getSelectedItem();
 
                 if (!dateDebutText.isEmpty() && !dateFinText.isEmpty() && 
-                    salleSelectionnee != null) {
+                    salleSelectionnee != null && membreSelectionne != null) {
                     try {
                         LocalDateTime dateDebut = LocalDateTime.parse(dateDebutText, formatter);
                         LocalDateTime dateFin = LocalDateTime.parse(dateFinText, formatter);
-                        
-                        // Validation des dates
+
                         if (dateFin.isBefore(dateDebut) || dateFin.isEqual(dateDebut)) {
                             JOptionPane.showMessageDialog(this, 
                                 "La date de fin doit être postérieure à la date de début!", 
@@ -379,8 +398,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                                 JOptionPane.WARNING_MESSAGE);
                             return;
                         }
-                        
-                        // Vérifier que la séance ne dure pas plus de 12 heures
                         Duration duree = Duration.between(dateDebut, dateFin);
                         if (duree.toHours() > 12) {
                             JOptionPane.showMessageDialog(this, 
@@ -389,8 +406,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                                 JOptionPane.WARNING_MESSAGE);
                             return;
                         }
-                        
-                        // Vérifier les conflits de salle (exclure la séance actuelle)
                         if (verifierConflitSalle(salleSelectionnee, dateDebut, dateFin, this.seanceSelectionnee)) {
                             JOptionPane.showMessageDialog(this, 
                                 "Conflit détecté : cette salle est déjà occupée pendant cette période!", 
@@ -398,22 +413,21 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                                 JOptionPane.WARNING_MESSAGE);
                             return;
                         }
-                        
-                        // Mettre à jour les données de la séance sélectionnée
+
                         this.seanceSelectionnee.setDateDebut(dateDebut);
                         this.seanceSelectionnee.setDateFin(dateFin);
                         this.seanceSelectionnee.setSalle(salleSelectionnee);
+                        this.seanceSelectionnee.setMembre(membreSelectionne);
 
                         seanceService.modifier(this.seanceSelectionnee);
-                        
-                        JOptionPane.showMessageDialog(this, 
+
+                        JOptionPane.showMessageDialog(this,
                             "Séance modifiée avec succès!", 
                             "Modification réussie", 
                             JOptionPane.INFORMATION_MESSAGE);
-                        
-                        // Recharger les données
+
                         loadData();
-                        
+
                     } catch (Exception e) {
                         JOptionPane.showMessageDialog(this, 
                             "Erreur lors de la modification: " + e.getMessage() + 
@@ -460,7 +474,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                         "Suppression réussie", 
                         JOptionPane.INFORMATION_MESSAGE);
                     
-                    // Recharger les données
                     loadData();
                     seanceSelectionnee = null;
                     
@@ -483,27 +496,19 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
         return seanceSelectionnee;
     }
     
-    /**
-     * Vérifie s'il y a un conflit de salle pour une période donnée
-     */
     private boolean verifierConflitSalle(Salle salle, LocalDateTime dateDebut, LocalDateTime dateFin, Seance seanceAExclure) {
         return seances.stream()
             .filter(seance -> seanceAExclure == null || !seance.getId().equals(seanceAExclure.getId()))
             .filter(seance -> seance.getSalle() != null && seance.getSalle().getId().equals(salle.getId()))
             .filter(seance -> seance.getDateDebut() != null && seance.getDateFin() != null)
             .anyMatch(seance -> 
-                // Vérifier le chevauchement des périodes
                 dateDebut.isBefore(seance.getDateFin()) && dateFin.isAfter(seance.getDateDebut())
             );
     }
-    
-    /**
-     * Méthode utilitaire pour dupliquer une séance
-     */
+
     public void dupliquerSeance() {
         if (seanceSelectionnee != null) {
-            // Demander la nouvelle date de début
-            String nouvelleDateStr = JOptionPane.showInputDialog(this, 
+            String nouvelleDateStr = JOptionPane.showInputDialog(this,
                 "Entrez la nouvelle date de début (dd/MM/yyyy HH:mm) :", 
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             
@@ -512,7 +517,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
                     LocalDateTime nouvelleDateDebut = LocalDateTime.parse(nouvelleDateStr, formatter);
                     
-                    // Calculer la durée de la séance originale
                     Duration dureeOriginale = Duration.between(
                         seanceSelectionnee.getDateDebut(), 
                         seanceSelectionnee.getDateFin()
@@ -520,7 +524,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                     
                     LocalDateTime nouvelleDateFin = nouvelleDateDebut.plus(dureeOriginale);
                     
-                    // Vérifier les conflits
                     if (verifierConflitSalle(seanceSelectionnee.getSalle(), nouvelleDateDebut, nouvelleDateFin, null)) {
                         JOptionPane.showMessageDialog(this, 
                             "Conflit détecté : la salle est déjà occupée pendant cette période!", 
@@ -529,8 +532,8 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                         return;
                     }
                     
-                    // Créer la copie sans membre (architecture mise à jour)
                     Seance copie = new Seance(nouvelleDateDebut, nouvelleDateFin, seanceSelectionnee.getSalle());
+                    copie.setMembre(seanceSelectionnee.getMembre());
                     seanceService.ajouter(copie);
                     
                     JOptionPane.showMessageDialog(this, 
@@ -538,7 +541,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
                         "Duplication réussie", 
                         JOptionPane.INFORMATION_MESSAGE);
                     
-                    // Recharger les données
                     loadData();
                     
                 } catch (Exception e) {
@@ -551,9 +553,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
         }
     }
     
-    /**
-     * Affiche les statistiques des séances
-     */
     public void afficherStatistiques() {
         int total = seances.size();
         int terminees = 0;
@@ -608,9 +607,6 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             JOptionPane.INFORMATION_MESSAGE);
     }
     
-    /**
-     * Affiche le planning des séances d'aujourd'hui
-     */
     public void afficherPlanningJour() {
         LocalDateTime debutJour = LocalDateTime.now().toLocalDate().atStartOfDay();
         LocalDateTime finJour = debutJour.plusDays(1).minusMinutes(1);
@@ -630,33 +626,18 @@ public class SeancePanel extends JPanel implements CrudOperationsInterface {
             planning.append("Aucune séance programmée aujourd'hui.");
         } else {
             DateTimeFormatter heureFormatter = DateTimeFormatter.ofPattern("HH:mm");
-            
             for (Seance seance : seancesJour) {
                 planning.append("• ").append(seance.getDateDebut().format(heureFormatter))
                         .append(" - ").append(seance.getDateFin().format(heureFormatter));
-                
                 if (seance.getSalle() != null) {
                     planning.append(" | Salle: ").append(seance.getSalle().getLibelle());
                 }
-                
-                // Corriger l'affichage des membres (getMembres() retourne une List<Membre>)
-                if (seance.getMembres() != null && !seance.getMembres().isEmpty()) {
-                    planning.append(" | ").append(seance.getMembres().size()).append(" membre(s) inscrit(s)");
-
-                    // Optionnellement, afficher le premier membre inscrit
-                    Membre premierMembre = seance.getMembres().get(0);
-                    if (premierMembre.getClient() != null) {
-                        planning.append(" (").append(premierMembre.getClient().getPrenom())
-                                .append(" ").append(premierMembre.getClient().getNom());
-                        if (seance.getMembres().size() > 1) {
-                            planning.append(" et ").append(seance.getMembres().size() - 1).append(" autre(s)");
-                        }
-                        planning.append(")");
-                    }
+                if (seance.getMembre() != null && seance.getMembre().getClient() != null) {
+                    Client c = seance.getMembre().getClient();
+                    planning.append(" | Membre: ").append(c.getPrenom()).append(" ").append(c.getNom());
                 } else {
                     planning.append(" | Aucun membre inscrit");
                 }
-                
                 planning.append(" (").append(determinerStatut(seance)).append(")\n");
             }
         }

@@ -1,138 +1,159 @@
 package gui_client.panel;
 
 import service.AuthService;
+import service.AuthService.LoginResult;
 import service.UserSessionManager;
-import entite.Client;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ConnexionPanel extends GenericAuthentificationPanel {
 
     private JTextField emailField;
     private JPasswordField passwordField;
-    private AuthService authService;
 
     public ConnexionPanel() {
         super("connexion");
-        this.authService = AuthService.getInstance();
-        initializeInputs();
-        configureActions();
+        createFormFields();
+        setupEventHandlers();
     }
 
-    private void initializeInputs() {
-        // Ajouter les champs spécifiques à la connexion
-        emailField = addTextInput("Email");
-        passwordField = addPasswordInput("Mot de passe");
+    private void createFormFields() {
+        // Créer les champs du formulaire
+        emailField = addTextInput("Email :");
+        passwordField = addPasswordInput("Mot de passe :");
     }
 
-    private void configureActions() {
+    private void setupEventHandlers() {
         // Action du bouton de connexion
-        setActionButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleLogin();
-            }
-        });
+        setActionButtonListener(e -> handleConnexion());
 
-        // Action pour changer vers l'inscription
-        setSwitchModeListener(new java.awt.event.MouseAdapter() {
+        // Lien vers la page d'inscription
+        setSwitchModeListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                navigateToInscription(); // Utilise la méthode de la classe parent
+            public void mouseClicked(MouseEvent e) {
+                navigateToInscription();
             }
         });
     }
 
-    private void handleLogin() {
+    private void handleConnexion() {
+        // Nettoyer les messages d'erreur précédents
+        clearErrorMessages();
+
+        // Récupérer les valeurs des champs
         String email = emailField.getText().trim();
         String password = new String(passwordField.getPassword());
 
-        // Effacer les anciens messages d'erreur
-        clearErrorMessages();
+        // Validation des champs
+        boolean hasErrors = false;
 
-        // Validation basique
-        if (email.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Veuillez remplir tous les champs", 
-                "Erreur", 
-                JOptionPane.WARNING_MESSAGE);
+        if (email.isEmpty()) {
+            addErrorMessage(emailField, "L'email est obligatoire");
+            hasErrors = true;
+        }
+
+        if (password.isEmpty()) {
+            addErrorMessage(passwordField, "Le mot de passe est obligatoire");
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
             return;
         }
 
-        // Authentification
-        AuthService.LoginResult result = authService.authenticate(email, password);
+        // Tenter la connexion
+        try {
+            AuthService authService = AuthService.getInstance();
+            LoginResult result = authService.authenticate(email, password);
 
-        if (result.isSuccess()) {
-            // Connexion réussie
-            Client client = result.getClient();
-            UserSessionManager.getInstance().login(client);
+            if (result.isSuccess()) {
+                // Connexion réussie
+                UserSessionManager.getInstance().login(result.getClient());
 
-            // Afficher un message de succès
+                JOptionPane.showMessageDialog(this,
+                    "Connexion réussie !\nBienvenue " + result.getClient().getPrenom() + " !",
+                    "Connexion réussie",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+                // Rediriger vers la page d'accueil du client
+                if (navigationController != null) {
+                    navigationController.navigateToPage("Accueil");
+                }
+
+            } else {
+                // Gérer les différents types d'erreurs
+                handleLoginError(result.getErrorCode());
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Connexion réussie ! Bienvenue " + client.getPrenom() + " " + client.getNom(),
-                "Succès",
-                JOptionPane.INFORMATION_MESSAGE);
-
-            // Rediriger vers la page d'accueil
-            if (navigationController != null) {
-                navigationController.navigateToPage("Accueil");
-            }
-
-        } else {
-            // Connexion échouée
-            switch (result.getErrorCode()) {
-                case "EMAIL_NOT_FOUND":
-                    addErrorMessage(emailField, "Email entré incorrect");
-                    break;
-                case "WRONG_PASSWORD":
-                    addErrorMessage(passwordField, "Mot de passe incorrect");
-                    break;
-                case "DATABASE_CONNECTION_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Impossible de se connecter à la base de données.\n\n" +
-                        "Veuillez vérifier que :\n" +
-                        "1. Le service MySQL/MariaDB est démarré\n" +
-                        "2. Votre connexion réseau fonctionne correctement\n" +
-                        "3. Les paramètres de connexion sont corrects\n\n" +
-                        "Pour démarrer le service MySQL/MariaDB :\n" +
-                        "- Ouvrez les Services Windows (services.msc)\n" +
-                        "- Recherchez le service 'MySQL' ou 'MariaDB'\n" +
-                        "- Cliquez-droit et sélectionnez 'Démarrer'",
-                        "Erreur de connexion",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_ACCESS_DENIED":
-                    JOptionPane.showMessageDialog(this,
-                        "Accès à la base de données refusé. Veuillez contacter l'administrateur.",
-                        "Erreur d'accès",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_NOT_FOUND":
-                    JOptionPane.showMessageDialog(this,
-                        "Base de données introuvable. Veuillez contacter l'administrateur.",
-                        "Erreur de configuration",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "DATABASE_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Erreur de base de données. Veuillez réessayer ultérieurement.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                case "UNEXPECTED_ERROR":
-                    JOptionPane.showMessageDialog(this,
-                        "Une erreur inattendue s'est produite. Veuillez réessayer ultérieurement.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-                    break;
-                default:
-                    JOptionPane.showMessageDialog(this,
-                        "Erreur inconnue. Veuillez réessayer.",
-                        "Erreur",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+                "Une erreur inattendue s'est produite lors de la connexion.\n" +
+                "Veuillez réessayer plus tard.",
+                "Erreur système",
+                JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void handleLoginError(String errorCode) {
+        String message;
+        String title = "Erreur de connexion";
+
+        switch (errorCode) {
+            case "EMAIL_NOT_FOUND":
+                message = "Cette adresse email n'est pas enregistrée.\nVérifiez votre email ou créez un nouveau compte.";
+                addErrorMessage(emailField, "Email non trouvé");
+                break;
+
+            case "WRONG_PASSWORD":
+                message = "Mot de passe incorrect.\nVérifiez votre mot de passe et réessayez.";
+                addErrorMessage(passwordField, "Mot de passe incorrect");
+                break;
+
+            case "NOT_APPROVED_MEMBER":
+                message = "<html><div style='text-align: center;'>" +
+                         "<h3>Compte en attente d'approbation</h3>" +
+                         "<p>Votre demande d'inscription est en cours de traitement.</p>" +
+                         "<p>Un administrateur doit approuver votre compte avant que vous puissiez vous connecter.</p>" +
+                         "<p>Vous recevrez une notification une fois votre compte approuvé.</p>" +
+                         "</div></html>";
+                title = "Compte non approuvé";
+                break;
+
+            case "DATABASE_CONNECTION_ERROR":
+                message = "Impossible de se connecter à la base de données.\nVérifiez votre connexion et réessayez.";
+                title = "Erreur de connexion";
+                break;
+
+            case "DATABASE_ERROR":
+                message = "Une erreur de base de données s'est produite.\nVeuillez réessayer plus tard.";
+                title = "Erreur de base de données";
+                break;
+
+            default:
+                message = "Une erreur inattendue s'est produite.\nVeuillez réessayer plus tard.";
+                title = "Erreur";
+                break;
+        }
+
+        JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Méthode pour réinitialiser le formulaire
+     */
+    public void resetForm() {
+        emailField.setText("");
+        passwordField.setText("");
+        clearErrorMessages();
+    }
+
+    /**
+     * Méthode pour pré-remplir l'email (utile après inscription)
+     */
+    public void setEmail(String email) {
+        emailField.setText(email);
     }
 }

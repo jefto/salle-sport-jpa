@@ -6,10 +6,7 @@ import entite.Membre;
 import entite.TypeAbonnement;
 import service.UserSessionManager;
 import service.ClientService;
-import service.AbonnementService;
-import service.MembreService;
-import dao.AbonnementDao;
-import dao.MembreDao;
+import gui_client.util.AbonnementSouscription;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,16 +14,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 public class ProfilPanel extends JPanel {
     
     private ClientService clientService;
-    private AbonnementService abonnementService;
-    private MembreService membreService;
-    private AbonnementDao abonnementDao;
-    private MembreDao membreDao;
+    private AbonnementSouscription abonnementUtil;
 
     private JTextField nomField;
     private JTextField prenomField;
@@ -40,13 +32,14 @@ public class ProfilPanel extends JPanel {
     private JLabel dateFinLabel;
     private JLabel statutAbonnementLabel;
 
+    // Table pour l'historique des abonnements
+    private JTable historiqueTable;
+    private javax.swing.table.DefaultTableModel historiqueTableModel;
+
     public ProfilPanel() {
         // Initialiser les services
         clientService = new ClientService();
-        abonnementService = new AbonnementService();
-        membreService = new MembreService();
-        abonnementDao = new AbonnementDao();
-        membreDao = new MembreDao();
+        abonnementUtil = AbonnementSouscription.getInstance();
 
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -115,6 +108,10 @@ public class ProfilPanel extends JPanel {
         // Section Abonnement
         gbc.gridy = 2;
         contentPanel.add(createSubscriptionSection(), gbc);
+
+        // Nouvelle section: Historique des abonnements
+        gbc.gridy = 3;
+        contentPanel.add(createHistoriqueSection(), gbc);
 
         return contentPanel;
     }
@@ -259,37 +256,79 @@ public class ProfilPanel extends JPanel {
         return section;
     }
 
+    private JPanel createHistoriqueSection() {
+        JPanel section = createSectionPanel("Historique des Abonnements");
+
+        // Table pour l'historique
+        historiqueTableModel = new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {
+                "Type d'Abonnement", "Date de Début", "Date de Fin", "Statut"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        };
+        historiqueTable = new JTable(historiqueTableModel);
+        historiqueTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        historiqueTable.setRowHeight(30);
+        historiqueTable.setSelectionBackground(new Color(52, 152, 219));
+        historiqueTable.setSelectionForeground(Color.WHITE);
+        historiqueTable.setDefaultEditor(Object.class, null); // Rendre les cellules non éditables
+
+        // Charger les données de l'historique
+        loadHistoriqueData();
+
+        JScrollPane tableScrollPane = new JScrollPane(historiqueTable);
+        tableScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        tableScrollPane.setPreferredSize(new Dimension(0, 150));
+
+        section.add(tableScrollPane, BorderLayout.CENTER);
+        return section;
+    }
+
     private void loadSubscriptionInfo() {
         try {
             Client currentUser = UserSessionManager.getInstance().getCurrentUser();
 
-            // Récupérer le membre correspondant au client en utilisant la méthode générique
-            Membre membre = membreDao.trouverPar("client.id", currentUser.getId());
+            // Récupérer le membre via l'utilitaire
+            Membre membre = abonnementUtil.getMembreByClientId(currentUser.getId());
 
             if (membre != null) {
-                // Récupérer l'abonnement actuel du membre en utilisant une requête JPQL personnalisée
-                Map<String, Object> parameters = new HashMap<>();
-                parameters.put("membreId", membre.getId());
-                parameters.put("now", java.time.LocalDateTime.now());
+                // Récupérer l'abonnement actif via l'utilitaire
+                Abonnement abonnementActif = abonnementUtil.getAbonnementActif(membre);
 
-                String jpql = "SELECT a FROM Abonnement a WHERE a.membre.id = :membreId AND a.dateFin >= :now ORDER BY a.dateFin DESC";
-                List<Abonnement> abonnements = abonnementDao.listerParRequete(jpql, parameters);
-
-                if (!abonnements.isEmpty()) {
-                    Abonnement abonnement = abonnements.get(0); // Prendre le plus récent
-
+                if (abonnementActif != null) {
                     // Afficher les informations d'abonnement
-                    TypeAbonnement typeAbonnement = abonnement.getTypeAbonnement();
+                    TypeAbonnement typeAbonnement = abonnementActif.getTypeAbonnement();
                     abonnementTypeLabel.setText(typeAbonnement != null ? typeAbonnement.getLibelle() : "Non défini");
 
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                    dateDebutLabel.setText(abonnement.getDateDebut().format(formatter));
-                    dateFinLabel.setText(abonnement.getDateFin().format(formatter));
+                    dateDebutLabel.setText(abonnementActif.getDateDebut().format(formatter));
+                    dateFinLabel.setText(abonnementActif.getDateFin().format(formatter));
 
                     // Vérifier si l'abonnement est encore actif
-                    if (abonnement.getDateFin().isAfter(java.time.LocalDateTime.now())) {
-                        statutAbonnementLabel.setText("Actif");
-                        statutAbonnementLabel.setForeground(new Color(46, 204, 113));
+                    if (abonnementUtil.isAbonnementActif(abonnementActif)) {
+                        long joursRestants = abonnementUtil.getJoursRestants(abonnementActif);
+                        statutAbonnementLabel.setText("Actif (" + joursRestants + " jour(s) restant(s))");
+
+                        if (joursRestants <= 7) {
+                            statutAbonnementLabel.setForeground(new Color(255, 165, 0)); // Orange pour renouvellement proche
+                        } else {
+                            statutAbonnementLabel.setForeground(new Color(46, 204, 113)); // Vert pour actif
+                        }
                     } else {
                         statutAbonnementLabel.setText("Expiré");
                         statutAbonnementLabel.setForeground(new Color(231, 76, 60));
@@ -318,6 +357,49 @@ public class ProfilPanel extends JPanel {
             dateFinLabel.setText("-");
             statutAbonnementLabel.setText("Erreur");
             statutAbonnementLabel.setForeground(new Color(231, 76, 60));
+        }
+    }
+
+    private void loadHistoriqueData() {
+        try {
+            historiqueTableModel.setRowCount(0); // Réinitialiser les données de la table
+
+            Client currentUser = UserSessionManager.getInstance().getCurrentUser();
+
+            // Récupérer le membre via l'utilitaire
+            Membre membre = abonnementUtil.getMembreByClientId(currentUser.getId());
+
+            if (membre != null) {
+                // Récupérer l'historique via l'utilitaire
+                List<Abonnement> abonnements = abonnementUtil.getHistoriqueAbonnements(membre);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                for (Abonnement abonnement : abonnements) {
+                    // Déterminer le statut avec plus de détails
+                    String statut;
+                    if (abonnementUtil.isAbonnementActif(abonnement)) {
+                        long joursRestants = abonnementUtil.getJoursRestants(abonnement);
+                        if (joursRestants <= 7) {
+                            statut = "Actif (expire bientôt)";
+                        } else {
+                            statut = "Actif";
+                        }
+                    } else {
+                        statut = "Expiré";
+                    }
+
+                    // Ajouter une ligne pour chaque abonnement
+                    historiqueTableModel.addRow(new Object[] {
+                        abonnement.getTypeAbonnement() != null ? abonnement.getTypeAbonnement().getLibelle() : "Non défini",
+                        abonnement.getDateDebut().format(formatter),
+                        abonnement.getDateFin().format(formatter),
+                        statut
+                    });
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -454,7 +536,7 @@ public class ProfilPanel extends JPanel {
             prenomField.setText(currentUser.getPrenom());
             emailField.setText(currentUser.getEmail());
             loadSubscriptionInfo();
+            loadHistoriqueData();
         }
     }
 }
-

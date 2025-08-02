@@ -28,10 +28,15 @@ public class DemandeInscription extends GenericEntity {
     private LocalDateTime dateDeTraitement;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_client")
     private Client client;
     
+    // Nouveau champ pour le statut
+    @Column(name="statut", length = 20)
+    private String statut; // "EN_ATTENTE", "ACCEPTE", "REJETE"
+
     public DemandeInscription(){
-        
+        this.statut = "EN_ATTENTE"; // Statut par défaut
     }
 
     public DemandeInscription(int id, LocalDateTime dateDeDemande, LocalDateTime dateDeTraitement, Client client) {
@@ -39,12 +44,14 @@ public class DemandeInscription extends GenericEntity {
         this.dateDeDemande = dateDeDemande;
         this.dateDeTraitement = dateDeTraitement;
         this.client = client;
+        this.statut = "EN_ATTENTE";
     }
 
     public DemandeInscription(LocalDateTime dateDeDemande, LocalDateTime dateDeTraitement, Client client) {
         this.dateDeDemande = dateDeDemande;
         this.dateDeTraitement = dateDeTraitement;
         this.client = client;
+        this.statut = "EN_ATTENTE";
     }
 
     public int getId() {
@@ -77,6 +84,14 @@ public class DemandeInscription extends GenericEntity {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public String getStatut() {
+        return statut;
+    }
+
+    public void setStatut(String statut) {
+        this.statut = statut;
     }
 
     @Override

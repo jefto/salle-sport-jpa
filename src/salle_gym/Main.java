@@ -3,7 +3,6 @@ package salle_gym;
 import entite.*;
 import gui_admin.AdminDashboard;
 import gui_client.ClientDashboard;
-import gui_util.LoginDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,20 +14,15 @@ public class Main {
     public static void main(String[] args) {
         // Lancer l'interface graphique dans le thread EDT
         SwingUtilities.invokeLater(() -> {
+            // Optionnel : utiliser le Look and Feel du système (Windows, macOS, etc.)
+            // Commenter les lignes ci-dessous si vous voulez le style Java par défaut
+            /*
             try {
-                // Utiliser le Look and Feel par défaut de Java (Metal) au lieu du système
-                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-
-                // Ou encore mieux, utiliser Nimbus si disponible
-                for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                    if ("Nimbus".equals(info.getName())) {
-                        UIManager.setLookAndFeel(info.getClassName());
-                        break;
-                    }
-                }
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelLookAndFeel());
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            */
 
             // Créer un menu de sélection
             showInterfaceSelector();
@@ -108,17 +102,9 @@ public class Main {
     }
 
     private static void showAdminInterface() {
-        // Afficher la fenêtre de connexion admin
-        LoginDialog loginDialog = new LoginDialog(null, "Connexion Admin");
-        loginDialog.setVisible(true);
-
-        // Si authentifié, ouvrir le dashboard admin
-        if (loginDialog.isAuthenticated()) {
-            AdminDashboard dashboard = new AdminDashboard();
-            dashboard.setVisible(true);
-        } else {
-            showInterfaceSelector(); // Retourner au menu
-        }
+        // Ouvrir directement l'interface admin sans authentification
+        AdminDashboard dashboard = new AdminDashboard();
+        dashboard.setVisible(true);
     }
 
     private static void showClientInterface() {

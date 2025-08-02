@@ -28,6 +28,7 @@ public class Paiement extends GenericEntity{
     private int montant;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_moyen_de_paiement")
     private MoyenDePaiement moyenDePaiement;
     
     public Paiement() {

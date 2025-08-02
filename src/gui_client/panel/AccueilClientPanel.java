@@ -234,8 +234,8 @@ public class AccueilClientPanel extends JPanel {
         };
         
         Color[] colors = {
-            new Color(52, 152, 219),
-            new Color(46, 204, 113),
+                new Color(155, 89, 182),
+                new Color(230, 126, 34),
             new Color(155, 89, 182),
             new Color(230, 126, 34)
         };
@@ -281,26 +281,21 @@ private JPanel createSubscriptionsSection() {
         sectionPanel.setBackground(Color.WHITE);
         sectionPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
 
-        // Titre de la section
-        JLabel titleLabel = new JLabel("Nos Abonnements", SwingConstants.CENTER);
+        // En-tête de section
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        headerPanel.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel("Nos abonnements", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setForeground(new Color(74, 41, 0));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
-        // Description
-        JLabel descriptionLabel = new JLabel("Choisissez l'abonnement qui correspond à vos besoins", SwingConstants.CENTER);
-        descriptionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        descriptionLabel.setForeground(Color.GRAY);
-        descriptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 30, 0));
-
-        // Panel d'en-tête avec titre et description
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
-        headerPanel.add(descriptionLabel, BorderLayout.SOUTH);
+        headerPanel.add(titleLabel);
 
         // Utiliser notre composant AbonnementBoxPanel qui récupère automatiquement les données
         AbonnementBoxPanel abonnementBoxPanel = new AbonnementBoxPanel();
+
+        // Passer le contrôleur de navigation à AbonnementBoxPanel
+        abonnementBoxPanel.setNavigationController(navigationController);
 
         // Bouton pour voir plus d'abonnements
         JButton voirPlusBtn = new JButton("Voir tous nos abonnements");
@@ -312,9 +307,14 @@ private JPanel createSubscriptionsSection() {
         voirPlusBtn.setPreferredSize(new Dimension(200, 40));
 
         voirPlusBtn.addActionListener(e -> {
-            // Navigation vers la page des abonnements
-            if (navigationController != null) {
-                navigationController.navigateToPage("Abonnements");
+            // Vérifier si l'utilisateur est connecté avant de naviguer vers les abonnements
+            if (!service.UserSessionManager.getInstance().isLoggedIn()) {
+                showAuthenticationRequiredForAbonnements();
+            } else {
+                // Navigation vers la page des abonnements
+                if (navigationController != null) {
+                    navigationController.navigateToPage("Abonnements");
+                }
             }
         });
 
@@ -330,18 +330,107 @@ private JPanel createSubscriptionsSection() {
 
         return sectionPanel;
     }
-    
+
+    /**
+     * Affiche un dialogue demandant à l'utilisateur de se connecter pour voir tous les abonnements
+     */
+    private void showAuthenticationRequiredForAbonnements() {
+        // Créer un panel personnalisé pour le message
+        JPanel messagePanel = new JPanel(new BorderLayout(10, 10));
+        messagePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Icône d'avertissement
+        JLabel iconLabel = new JLabel(UIManager.getIcon("OptionPane.warningIcon"));
+
+        // Message principal
+        JLabel messageLabel = new JLabel(
+            "<html><div style='text-align: center; width: 300px;'>" +
+            "<h3>Authentification requise</h3>" +
+            "<p>Pour voir tous nos abonnements et leurs détails, " +
+            "vous devez d'abord vous connecter ou créer un compte.</p>" +
+            "<p>Souhaitez-vous vous connecter maintenant ?</p>" +
+            "</div></html>"
+        );
+        messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        messagePanel.add(iconLabel, BorderLayout.WEST);
+        messagePanel.add(messageLabel, BorderLayout.CENTER);
+
+        // Options personnalisées
+        String[] options = {"Se connecter", "S'inscrire", "Annuler"};
+
+        int choice = JOptionPane.showOptionDialog(
+            this,
+            messagePanel,
+            "Authentification requise",
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.WARNING_MESSAGE,
+            null,
+            options,
+            options[0] // Option par défaut
+        );
+
+        // Gérer la réponse de l'utilisateur
+        switch (choice) {
+            case 0: // Se connecter
+                navigateToConnexion();
+                break;
+            case 1: // S'inscrire
+                navigateToInscription();
+                break;
+            case 2: // Annuler
+                // Ne rien faire, fermer la boîte de dialogue
+                break;
+        }
+    }
+
+    /**
+     * Navigate vers la page de connexion
+     */
+    private void navigateToConnexion() {
+        if (navigationController != null) {
+            navigationController.navigateToPage("Connexion");
+        } else {
+            // Fallback si le contrôleur n'est pas disponible
+            Container parent = this.getParent();
+            while (parent != null && !(parent instanceof gui_client.ClientDashboard)) {
+                parent = parent.getParent();
+            }
+            if (parent instanceof gui_client.ClientDashboard) {
+                ((gui_client.ClientDashboard) parent).navigateToPage("Connexion");
+            }
+        }
+    }
+
+    /**
+     * Navigate vers la page d'inscription
+     */
+    private void navigateToInscription() {
+        if (navigationController != null) {
+            navigationController.navigateToPage("Inscription");
+        } else {
+            // Fallback si le contrôleur n'est pas disponible
+            Container parent = this.getParent();
+            while (parent != null && !(parent instanceof gui_client.ClientDashboard)) {
+                parent = parent.getParent();
+            }
+            if (parent instanceof gui_client.ClientDashboard) {
+                ((gui_client.ClientDashboard) parent).navigateToPage("Inscription");
+            }
+        }
+    }
+
     private JPanel createActionButtonsSection() {
         JPanel sectionPanel = new JPanel(new FlowLayout());
         sectionPanel.setBackground(new Color(255, 244, 158));
         sectionPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
-        
+
         JButton registerButton = createActionButton("S'inscrire", new Color(46, 204, 113));
         JButton loginButton = createActionButton("Se connecter", new Color(52, 152, 219));
-        
+
         // *** CONFIGURER LES ACTIONS AVEC StyleUtil ***
         gui_util.StyleUtil.configureAuthenticationButtons(
-            loginButton, 
+            loginButton,
             registerButton,
             () -> {
                 // Action pour connexion
@@ -374,14 +463,14 @@ private JPanel createSubscriptionsSection() {
                 }
             }
         );
-        
+
         sectionPanel.add(registerButton);
         sectionPanel.add(Box.createHorizontalStrut(20));
         sectionPanel.add(loginButton);
-        
+
         return sectionPanel;
     }
-    
+
     private JButton createActionButton(String text, Color color) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 16));
@@ -390,27 +479,27 @@ private JPanel createSubscriptionsSection() {
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(12, 25, 12, 25));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 button.setBackground(color.darker());
             }
-            
+
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(color);
             }
         });
-        
+
         return button;
     }
-    
+
     private JPanel createTestimonialsSection() {
         JPanel sectionPanel = new JPanel(new BorderLayout());
         sectionPanel.setBackground(Color.WHITE);
         sectionPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
-        
+
         // Titre
         JLabel titleLabel = new JLabel("Témoignages de nos clients", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));

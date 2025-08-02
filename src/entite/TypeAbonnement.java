@@ -58,7 +58,7 @@ public class TypeAbonnement implements Serializable {
 
     @Override
     public String toString() {
-        return libelle + " (" + montant + " €)";
+        return libelle + " (" + montant + " FCFA)";
     }
 
     // equals et hashCode basés sur le code
